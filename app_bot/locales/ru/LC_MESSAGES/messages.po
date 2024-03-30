@@ -61,20 +61,8 @@ msgid "MAILING_BUTTON"
 msgstr "Запустить"
 
 
-msgid "REGISTER_BUTTON"
-msgstr "Три шага для регистрации"
-
-
 msgid "SUPPORT_BUTTON"
-msgstr "Связаться с менеджером"
-
-
-msgid "SHARE_CONTACT_BUTTON"
-msgstr "Подтвердить номер телефона"
-
-
-msgid "FOLLOWED_BUTTON"
-msgstr "✅ Подписался"
+msgstr "Поддержка
 
 
 # texts
@@ -106,57 +94,6 @@ msgstr "Вам выданы права администратора"
 
 msgid "WELCOME_MSG"
 msgstr "Приветственное сообщение + ссылка на видео"
-
-
-msgid "FIO_INPUT"
-msgstr "1️⃣ имя"
-
-
-
-msgid "EMAIL_INPUT"
-msgstr "2️⃣ напишите свою электронную почту"
-
-
-msgid "PHONE_INPUT"
-msgstr "3️⃣ подтвердите свой номер телефона по кнопке ниже или просто напишите его в ответ на это сообщение"
-
-
-msgid "REGISTERED"
-msgstr "Спасибо! Мы обязательно свяжемся с Вами и пришлем уведомление перед началом занятий"
-
-
-msgid "ALREADY_REGISTERED"
-msgstr "Вы успешно зарегистрированы на курс! Мы обязательно свяжемся с вами и пришлем уведомление перед началом занятий"
-
-
-msgid "CHECK_QUESTION"
-msgstr "Если у Вас есть какие-либо вопросы, нажмите на кнопку"
-
-
-msgid "QUESTION_INPUT"
-msgstr "Введите Ваш вопрос, пожалуйста"
-
-
-msgid "QUESTION_INFO"
-msgstr "Спасибо! В ближайшее время мы с Вами свяжемся"
-
-
-msgid "FIO_WRONG_INPUT"
-msgstr "Введите корректное ФИО\n\n"
-
-"<i>Пример: Иванов Иван Иванович</i>"
-
-
-msgid "EMAIL_WRONG_INPUT"
-msgstr "Введите корректную почту\n\n"
-
-"<i>Пример: mail@gmail.com</i>"
-
-
-msgid "PHONE_WRONG_INPUT"
-msgstr "Введите корректный номер\n\n"
-
-"<i>Пример: +79119119911</i>"
 
 
 # format

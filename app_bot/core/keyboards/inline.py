@@ -1,6 +1,7 @@
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from core.utils.texts import _
+from settings import settings
 
 
 def mailing_kb() -> InlineKeyboardMarkup:
@@ -10,23 +11,10 @@ def mailing_kb() -> InlineKeyboardMarkup:
     return kb.as_markup(resize_keyboard=True)
 
 
-def menu_kb() -> InlineKeyboardMarkup:
+def payment_kb(agency_url: str, manager_url: str) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    kb.button(text=_('REGISTER_BUTTON'), callback_data='register')
-    kb.button(text=_('SUPPORT_BUTTON'), callback_data='support')
-    kb.adjust(1)
-    return kb.as_markup(resize_keyboard=True)
-
-
-def support_kb() -> InlineKeyboardMarkup:
-    kb = InlineKeyboardBuilder()
-    kb.button(text=_('SUPPORT_BUTTON'), callback_data='support')
-    kb.adjust(1)
-    return kb.as_markup(resize_keyboard=True)
-
-
-def followed_kb() -> InlineKeyboardMarkup:
-    kb = InlineKeyboardBuilder()
-    kb.button(text=_('FOLLOWED_BUTTON'), callback_data='followed')
+    kb.button(text=_('AGENCY_PAY_BUTTON'), url=agency_url)
+    kb.button(text=_('MANAGER_PAY_BUTTON'), url=manager_url)
+    kb.button(text=_('SUPPORT_BUTTON'), url=settings.admin_chat_link)
     kb.adjust(1)
     return kb.as_markup(resize_keyboard=True)

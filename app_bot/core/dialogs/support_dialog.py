@@ -2,7 +2,7 @@ from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.text import Const
 from aiogram_dialog.widgets.input import TextInput
 from core.dialogs.callbacks import CallBackHandler
-from core.states.support import SupportStateGroup
+from core.states.manager import ManagerStateGroup
 from core.utils.texts import _
 
 
@@ -11,10 +11,10 @@ support_dialog = Dialog(
     Window(
         Const(text=_('QUESTION_INPUT')),
         TextInput(
-            id='question_input',
+            id='create_bloger_link',
             type_factory=str,
-            on_success=CallBackHandler.entered_question,
+            on_success=CallBackHandler.entered_username,
         ),
-        state=SupportStateGroup.question_input,
+        state=ManagerStateGroup.create_bloger_link,
     ),
 )

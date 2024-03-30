@@ -1,1 +1,1 @@
-# Bot with admin-panel is entrypoint for course
+# Bot with admin-panel is for buyers and sellers interactionsy

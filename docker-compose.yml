@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DATABASE}
     
-    container_name: bot_with_django_postgres
+    container_name: postgres_reklama
     restart: 'always'
     ports:
       - '5432'
@@ -38,7 +38,7 @@ services:
     build:
       context: .
       dockerfile: DockerfileAdmin
-    container_name: bot_with_django_django
+    container_name: django_reklama
     restart: always
     env_file:
       - .env
@@ -59,7 +59,7 @@ services:
     build:
       context: .
       dockerfile: DockerfileBot
-    container_name: dot_with_django_bot
+    container_name: bot_reklama
     restart: 'always'
     networks:
       - bot_with_django_db
@@ -79,7 +79,7 @@ services:
     build:
       context: .
       dockerfile: DockerfileBroadcaster
-    container_name: bot_with_django_broadcaster
+    container_name: broadcaster_reklama
     restart: 'always'
     networks:
       - bot_with_django_db
