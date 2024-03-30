@@ -35,7 +35,7 @@ agency_dialog = Dialog(
         state=AgencyStateGroup.create_link,
     ),
 
-    # budget
+    # users
     Window(
         Const(text=_('PICK_USER')),
         CustomPager(

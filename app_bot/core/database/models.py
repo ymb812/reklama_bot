@@ -42,6 +42,24 @@ class User(Model):
         await cls.filter(user_id=user_id).update(status=status)
 
 
+class Advertisement(Model):
+    class Meta:
+        table = 'advertisements'
+        ordering = ['id']
+
+    id = fields.BigIntField(pk=True)
+    text = fields.TextField(null=True)
+    photo_file_id = fields.CharField(max_length=256, null=True)
+    video_file_id = fields.CharField(max_length=256, null=True)
+    document_file_id = fields.CharField(max_length=256, null=True)
+
+    manager = fields.ForeignKeyField('models.User', to_field='id', related_name='managers', null=True)
+    bloger = fields.ForeignKeyField('models.User', to_field='id', related_name='blogers', null=True)
+    buyer = fields.ForeignKeyField('models.User', to_field='id', related_name='buyers', null=True)
+
+    created_at = fields.DatetimeField(auto_now_add=True)
+
+
 class Dispatcher(Model):
     class Meta:
         table = 'mailings'

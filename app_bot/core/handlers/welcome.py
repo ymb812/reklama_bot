@@ -30,7 +30,7 @@ async def start_handler(
         if user.status == 'agency':
             await dialog_manager.start(state=AgencyStateGroup.menu, mode=StartMode.RESET_STACK)
         elif user.status == 'manager':
-            await dialog_manager.start(state=ManagerStateGroup.create_bloger_link, mode=StartMode.RESET_STACK)
+            await dialog_manager.start(state=ManagerStateGroup.menu, mode=StartMode.RESET_STACK)
         elif user.status == 'bloger':
             await dialog_manager.start(state=BlogerStateGroup.menu, mode=StartMode.RESET_STACK)
         elif user.status == 'buyer':
@@ -80,7 +80,7 @@ async def start_handler(
 
         # start manager/bloger/buyer dialog
         if user.status == 'manager':
-            await dialog_manager.start(state=ManagerStateGroup.create_bloger_link, mode=StartMode.RESET_STACK)
+            await dialog_manager.start(state=ManagerStateGroup.menu, mode=StartMode.RESET_STACK)
         elif user.status == 'bloger':
             await dialog_manager.start(state=BlogerStateGroup.menu, mode=StartMode.RESET_STACK)
         elif user.status == 'buyer':

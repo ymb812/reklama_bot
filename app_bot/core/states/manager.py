@@ -2,6 +2,9 @@ from aiogram.fsm.state import State, StatesGroup
 
 
 class ManagerStateGroup(StatesGroup):
+    menu = State()
+    users_list = State()
     create_bloger_link = State()
-    reklams = State()
-    reklam_menu = State()
+    user_menu = State()
+    send_task = State()
+    ask_stats = State()

@@ -45,4 +45,8 @@ async def successful_payment(message: types.Message, state: FSMContext, dialog_m
     if status == 'agency':
         await dialog_manager.start(state=AgencyStateGroup.menu, mode=StartMode.RESET_STACK)
     elif status == 'manager':
-        await dialog_manager.start(state=ManagerStateGroup.create_bloger_link, mode=StartMode.RESET_STACK)
+        await dialog_manager.start(state=ManagerStateGroup.menu, mode=StartMode.RESET_STACK)
+
+
+
+# TODO: ADD APPROVE/REJECT HANDLERS

@@ -62,7 +62,7 @@ msgstr "Запустить"
 
 
 msgid "SUPPORT_BUTTON"
-msgstr "Поддержка
+msgstr "Поддержка"
 
 
 # texts
@@ -94,6 +94,12 @@ msgstr "Вам выданы права администратора"
 
 msgid "WELCOME_MSG"
 msgstr "Приветственное сообщение + ссылка на видео"
+
+
+msgid "INPUT_USERNAME_AND_INST"
+msgstr "Введите tg и inst ник блогера через пробел: tgusername instusername\n\n"
+
+"Пример: <code>username1 username2</code>"
 
 
 # format
