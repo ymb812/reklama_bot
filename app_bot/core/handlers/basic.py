@@ -1,13 +1,14 @@
 import logging
 import asyncio
 from aiogram import types, Router, F, Bot
-from aiogram.filters import Command, CommandObject
+from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram_dialog import DialogManager, StartMode
 from core.database.models import User
 from core.states.agency import AgencyStateGroup
 from core.states.manager import ManagerStateGroup
 from core.utils.texts import set_admin_commands, _
+
 
 logger = logging.getLogger(__name__)
 router = Router(name='Basic commands router')
@@ -46,7 +47,3 @@ async def successful_payment(message: types.Message, state: FSMContext, dialog_m
         await dialog_manager.start(state=AgencyStateGroup.menu, mode=StartMode.RESET_STACK)
     elif status == 'manager':
         await dialog_manager.start(state=ManagerStateGroup.menu, mode=StartMode.RESET_STACK)
-
-
-
-# TODO: ADD APPROVE/REJECT HANDLERS

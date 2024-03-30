@@ -53,8 +53,14 @@ class Advertisement(Model):
     video_file_id = fields.CharField(max_length=256, null=True)
     document_file_id = fields.CharField(max_length=256, null=True)
 
-    manager = fields.ForeignKeyField('models.User', to_field='id', related_name='managers', null=True)
+    is_approved_by_bloger = fields.BooleanField(default=False)
+    is_approved_by_manager = fields.BooleanField(default=False)
+    is_approved_by_buyer = fields.BooleanField(default=False)  # dialog after the paid reklams
+
+    is_paid = fields.BooleanField(default=False)  # mb useless cuz its equally to the 'is_approved_by_manager'
+
     bloger = fields.ForeignKeyField('models.User', to_field='id', related_name='blogers', null=True)
+    manager = fields.ForeignKeyField('models.User', to_field='id', related_name='managers', null=True)
     buyer = fields.ForeignKeyField('models.User', to_field='id', related_name='buyers', null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)

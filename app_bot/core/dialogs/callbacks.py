@@ -4,8 +4,10 @@ from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import ManagedTextInput, MessageInput
 from aiogram_dialog.widgets.kbd import Button, Select
+from aiogram_dialog.widgets.common import ManagedScroll
 from core.states.agency import AgencyStateGroup
 from core.states.manager import ManagerStateGroup
+from core.states.bloger import BlogerStateGroup
 from core.database.models import User, Advertisement, Dispatcher, Post
 from core.keyboards.inline import handle_new_task_kb
 from core.utils.texts import _
@@ -17,7 +19,18 @@ def generate_random_string(length):
     return ''.join(random.choice(characters) for _ in range(length))
 
 
-class CallBackHandler:
+async def switch_page(dialog_manager: DialogManager, scroll_id: str):
+    # switch page
+    scroll: ManagedScroll = dialog_manager.find(scroll_id)
+    current_page = await scroll.get_page()
+    if current_page == dialog_manager.dialog_data['pages'] - 1:
+        next_page = 0
+    else:
+        next_page = current_page + 1
+    await scroll.set_page(next_page)
+
+
+class AgencyManagerCallbackHandler:
     @staticmethod
     async def add_user(
             callback: CallbackQuery,
@@ -150,17 +163,17 @@ class CallBackHandler:
             bloger_id=bloger_id
         )
 
-        # send task to the bloger
-        bloger = await User.get_or_none(id=bloger_id)
-        if bloger.user_id:
-            await dialog_manager.event.bot.send_message(
-                chat_id=bloger.user_id,
-                text=f'Новое ТЗ от менеджера @{message.from_user.username}',
-                reply_markup=handle_new_task_kb(adv_id=adv.id)
-            )
-            await message.forward(chat_id=bloger.user_id)
-        else:
-            await message.answer('Блогер еще не зарегистрировался в боте')
+        # # send task to the bloger
+        # bloger = await User.get_or_none(id=bloger_id)
+        # if bloger.user_id:
+        #     await dialog_manager.event.bot.send_message(
+        #         chat_id=bloger.user_id,
+        #         text=f'Новое ТЗ от менеджера @{message.from_user.username}',
+        #         reply_markup=handle_new_task_kb(adv_id=adv.id)
+        #     )
+        #     await message.forward(chat_id=bloger.user_id)
+        # else:
+        #     await message.answer('Блогер еще не зарегистрировался в боте')
 
         await dialog_manager.switch_to(ManagerStateGroup.user_menu)
 
@@ -187,3 +200,39 @@ class CallBackHandler:
         await callback.message.answer('Здесь будет просмотр статистики')
 
         await dialog_manager.switch_to(ManagerStateGroup.user_menu)
+
+
+class BlogerCallbackHandler:
+    @staticmethod
+    async def reklams_list(
+            callback: CallbackQuery,
+            widget: Button | Select,
+            dialog_manager: DialogManager,
+            item_id: str | None = None,
+    ):
+        if widget.widget_id == 'reklams_approve':
+            dialog_manager.dialog_data['is_paid'] = False
+        elif widget.widget_id == 'paid_reklams':
+            dialog_manager.dialog_data['is_paid'] = True
+
+        await dialog_manager.switch_to(BlogerStateGroup.reklams_list)
+
+
+    @staticmethod
+    async def approve_or_reject_reklam(
+            callback: CallbackQuery,
+            widget: Button | Select,
+            dialog_manager: DialogManager,
+    ):
+        adv = await Advertisement.get_or_none(id=dialog_manager.dialog_data['current_reklam_id'])
+        if widget.widget_id == 'approve_reklam':
+            # change adv status and send msg to manager
+            adv.is_approved_by_bloger = True
+
+            await callback.message.answer(text='Далее как-то происходит согласование')
+
+        elif widget.widget_id == 'reject_reklam':
+            await adv.delete()
+
+        await switch_page(dialog_manager=dialog_manager, scroll_id='reklam_scroll')
+        await adv.save()
