@@ -21,6 +21,7 @@ class User(models.Model):
     inst_username = models.CharField(max_length=32, null=True, blank=True)
     status = models.CharField(max_length=32, choices=StatusType, null=True, blank=True)
     link = models.CharField(max_length=64, null=True, blank=True)
+    is_banned = models.BooleanField(default=False, blank=True)
 
     manager = models.ForeignKey('User', on_delete=models.CASCADE, related_name='to_manager', null=True, blank=True)
     agency = models.ForeignKey('User', on_delete=models.CASCADE, related_name='to_agency', null=True, blank=True)
