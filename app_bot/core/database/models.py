@@ -11,42 +11,29 @@ class User(Model):
         table = 'users'
         ordering = ['created_at']
 
-    user_id = fields.BigIntField(pk=True, index=True)
-    username = fields.CharField(max_length=32, index=True, null=True)
-    is_registered = fields.BooleanField(default=False)
-    fio = fields.CharField(max_length=64, null=True)
-    email = fields.CharField(max_length=64, null=True)
-    phone = fields.CharField(max_length=16, null=True)
-    status = fields.CharField(max_length=32, null=True)  # admin
-
-    first_name = fields.CharField(max_length=64)
-    last_name = fields.CharField(max_length=64, null=True)
-    language_code = fields.CharField(max_length=2, null=True)
-    is_premium = fields.BooleanField(null=True)
+    id = fields.BigIntField(pk=True, index=True)
+    user_id = fields.BigIntField(unique=True, null=True)
+    username = fields.CharField(max_length=32, null=True)
+    inst_username = fields.CharField(max_length=32, null=True)
+    status = fields.CharField(max_length=32, null=True)  # agency/manager/bloger/buyer
+    link = fields.CharField(max_length=64, unique=True, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
     @classmethod
-    async def update_data(cls, user_id: int, first_name: str, last_name: str, username: str, language_code: str,
-                          is_premium: bool):
+    async def update_data(cls, user_id: int, username: str, status: str):
         user = await cls.filter(user_id=user_id).first()
         if user is None:
             await cls.create(
                 user_id=user_id,
-                first_name=first_name,
-                last_name=last_name,
                 username=username,
-                language_code=language_code,
-                is_premium=is_premium,
+                status=status,
             )
         else:
             await cls.filter(user_id=user_id).update(
-                first_name=first_name,
-                last_name=last_name,
                 username=username,
-                language_code=language_code,
-                is_premium=is_premium,
+                status=status,
                 updated_at=datetime.now()
             )
 
@@ -55,13 +42,27 @@ class User(Model):
         await cls.filter(user_id=user_id).update(status=status)
 
 
-class SupportRequest(Model):
+class Advertisement(Model):
     class Meta:
-        table = 'support_requests'
+        table = 'advertisements'
+        ordering = ['id']
 
     id = fields.BigIntField(pk=True)
-    user = fields.ForeignKeyField('models.User', to_field='user_id')
-    text = fields.TextField()
+    text = fields.TextField(null=True)
+    photo_file_id = fields.CharField(max_length=256, null=True)
+    video_file_id = fields.CharField(max_length=256, null=True)
+    document_file_id = fields.CharField(max_length=256, null=True)
+
+    is_approved_by_bloger = fields.BooleanField(default=False)
+    is_approved_by_manager = fields.BooleanField(default=False)
+    is_approved_by_buyer = fields.BooleanField(default=False)  # dialog after the paid reklams
+
+    is_paid = fields.BooleanField(default=False)  # mb useless cuz its equally to the 'is_approved_by_manager'
+
+    bloger = fields.ForeignKeyField('models.User', to_field='id', related_name='blogers', null=True)
+    manager = fields.ForeignKeyField('models.User', to_field='id', related_name='managers', null=True)
+    buyer = fields.ForeignKeyField('models.User', to_field='id', related_name='buyers', null=True)
+
     created_at = fields.DatetimeField(auto_now_add=True)
 
 
@@ -74,7 +75,7 @@ class Dispatcher(Model):
     post = fields.ForeignKeyField('models.Post', to_field='id')
     is_for_registered_only = fields.BooleanField(default=True)
     is_for_all_users = fields.BooleanField(default=False)
-    user = fields.ForeignKeyField('models.User', to_field='user_id', null=True)
+    user = fields.ForeignKeyField('models.User', to_field='id', null=True)
     send_at = fields.DatetimeField()
 
 
@@ -90,8 +91,3 @@ class Post(Model):
     document_file_id = fields.CharField(max_length=256, null=True)
     sticker_file_id = fields.CharField(max_length=256, null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
-
-
-    @classmethod
-    async def get_posts_by_scenario(cls, scenario_id: int):
-        return await cls.filter(id=scenario_id).all()

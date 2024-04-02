@@ -2,13 +2,15 @@ import datetime
 import logging
 from aiogram import Bot, types, Router, F
 from aiogram.fsm.context import FSMContext
-from aiogram.filters import Command, StateFilter
+from aiogram.filters import Command, StateFilter, CommandObject
 from aiogram_dialog import DialogManager, StartMode
-from core.states.registration import RegistrationStateGroup
-from core.states.support import SupportStateGroup
+from core.states.agency import AgencyStateGroup
+from core.states.manager import ManagerStateGroup
+from core.states.bloger import BlogerStateGroup
+from core.states.buyer import BuyerStateGroup
 from core.utils.texts import set_user_commands, set_admin_commands, _
 from core.database.models import User, Post, Dispatcher
-from core.keyboards.inline import menu_kb, support_kb, followed_kb
+from core.keyboards.inline import payment_kb
 from settings import settings
 
 
@@ -16,95 +18,70 @@ logger = logging.getLogger(__name__)
 router = Router(name='Start router')
 
 
-
 @router.message(Command(commands=['start']), StateFilter(None))
-async def start_handler(message: types.Message, bot: Bot, state: FSMContext):
+async def start_handler(
+        message: types.Message, bot: Bot, state: FSMContext, command: CommandObject, dialog_manager: DialogManager
+):
     await state.clear()
 
-    # check channel for user
-    chat_member = await bot.get_chat_member(user_id=message.from_user.id, chat_id=settings.required_channel_id)
-    if chat_member.status not in ['creator', 'administrator', 'member', 'restricted']:
-        logger.info(f'user_id={message.from_user.id} is not in the chat')
-        channel_link = await bot.create_chat_invite_link(chat_id=settings.required_channel_id)
+    # go to dialogs if already registered
+    user = await User.get_or_none(user_id=message.from_user.id)
+    if user and user.status in ['agency', 'manager', 'bloger', 'buyer']:
+        if user.status == 'agency':
+            await dialog_manager.start(state=AgencyStateGroup.menu, mode=StartMode.RESET_STACK)
+        elif user.status == 'manager':
+            await dialog_manager.start(state=ManagerStateGroup.menu, mode=StartMode.RESET_STACK)
+        elif user.status == 'bloger':
+            await dialog_manager.start(state=BlogerStateGroup.menu, mode=StartMode.RESET_STACK)
+        elif user.status == 'buyer':
+            await dialog_manager.start(state=BuyerStateGroup.menu, mode=StartMode.RESET_STACK)
+
+        return
+
+
+    await set_user_commands(bot=bot, scope=types.BotCommandScopeChat(chat_id=message.from_user.id))
+
+    # default welcome
+    if not command.args:
+        agency_url = await bot.create_invoice_link(
+            title=_('AGENCY_INVOICE_TITLE'),
+            description=_('AGENCY_INVOICE_DESCRIPTION'),
+            provider_token=settings.payments_provider_token.get_secret_value(),
+            currency='rub',
+            prices=[types.LabeledPrice(label=_('AGENCY_INVOICE_TITLE'), amount=2999 * 100)],
+            payload=f'agency'
+            )
+        manager_url = await bot.create_invoice_link(
+            title=_('MANAGER_INVOICE_TITLE'),
+            description=_('MANAGER_INVOICE_DESCRIPTION'),
+            provider_token=settings.payments_provider_token.get_secret_value(),
+            currency='rub',
+            prices=[types.LabeledPrice(label=_('MANAGER_INVOICE_TITLE'), amount=399 * 100)],
+            payload=f'manager'
+            )
+
         await message.answer(
-            text=_('NOT_FOLLOWED', channel_link=channel_link.invite_link), reply_markup=followed_kb()
+            text=_('WELCOME_MSG'),
+            reply_markup=payment_kb(agency_url=agency_url, manager_url=manager_url)
         )
-        return
 
-    # followed handler
-    await followed_handler(message=message, bot=bot)
-
-
-@router.callback_query(F.data == 'followed')
-async def followed_handler(callback: types.CallbackQuery | None = None, message: types.Message | None = None,
-                           bot: Bot = None):
-    if message:
-        callback = message
-
-    # check channel for user
-    chat_member = await bot.get_chat_member(user_id=callback.from_user.id, chat_id=settings.required_channel_id)
-    if chat_member.status not in ['creator', 'administrator', 'member', 'restricted']:
-        logger.info(f'user_id={callback.from_user.id} is not in the chat')
-        channel_link = await bot.create_chat_invite_link(chat_id=settings.required_channel_id)
-        await bot.send_message(
-            chat_id=callback.from_user.id,
-            text=_('NOT_FOLLOWED', channel_link=channel_link.invite_link),
-            reply_markup=followed_kb()
-        )
-        return
-
-    # add basic info to db
-    await User.update_data(
-        user_id=callback.from_user.id,
-        first_name=callback.from_user.first_name,
-        last_name=callback.from_user.last_name,
-        username=callback.from_user.username,
-        language_code=callback.from_user.language_code,
-        is_premium=callback.from_user.is_premium,
-    )
-
-    user = await User.get(user_id=callback.from_user.id)
-    if user.is_registered:
-        # send already_registered msg from DB
-        registered_post = await Post.get_or_none(id=settings.registered_post_id)
-        if registered_post:
-            await bot.send_message(
-                chat_id=callback.from_user.id, text=registered_post.text, reply_markup=support_kb()
-            )
-        else:
-            await bot.send_message(
-                chat_id=callback.from_user.id, text=_('REGISTERED'), reply_markup=support_kb()
-            )
-        return
-
-    if user.status == 'admin':
-        await set_admin_commands(bot=bot, scope=types.BotCommandScopeChat(chat_id=callback.from_user.id))
+    # add bloger/manager/buyer
     else:
-        await set_user_commands(bot=bot, scope=types.BotCommandScopeChat(chat_id=callback.from_user.id))
+        link = settings.bot_link + command.args
+        user = await User.get_or_none(link=link)
+        if not user:  # ignore start w/o link from non-users
+            return
 
-    # create order for notification if there is no
-    send_at=datetime.datetime.now() - datetime.timedelta(hours=1)
-    logger.info(f'{send_at}')
-    if not (await Dispatcher.get_or_none(post_id=settings.notification_post_id, user_id=callback.from_user.id)):
-        await Dispatcher.create(
-            post_id=settings.notification_post_id,
-            user_id=callback.from_user.id,
-            send_at=send_at,
-        )
+        # save tg data and delete link
+        user.user_id = message.from_user.id
+        user.username = message.from_user.username
+        user.link = None
+        await user.save()
 
-    # send 2 welcome msgs from DB
-    welcome_post = await Post.get(id=settings.welcome_post_id)
-    welcome_post_id_2 = await Post.get(id=settings.welcome_post_id_2)
-    await bot.send_video_note(chat_id=callback.from_user.id, video_note=welcome_post.video_note_id)
-    await bot.send_video_note(chat_id=callback.from_user.id, video_note=welcome_post_id_2.video_note_id)
-    await bot.send_message(chat_id=callback.from_user.id, text=welcome_post.text, reply_markup=menu_kb())
-
-
-# register support
-@router.callback_query(lambda c: c.data in ['register', 'support'])
-async def menu_handler(callback: types.CallbackQuery, state: FSMContext, dialog_manager: DialogManager):
-    # going to the register or support FSM
-    if callback.data == 'register':
-        await dialog_manager.start(state=RegistrationStateGroup.fio_input, mode=StartMode.RESET_STACK)
-    else:
-        await dialog_manager.start(state=SupportStateGroup.question_input, mode=StartMode.RESET_STACK)
+        # start manager/bloger/buyer dialog
+        if user.status == 'manager':
+            await dialog_manager.start(state=ManagerStateGroup.menu, mode=StartMode.RESET_STACK)
+        elif user.status == 'bloger':
+            await dialog_manager.start(state=BlogerStateGroup.menu, mode=StartMode.RESET_STACK)
+        elif user.status == 'buyer':
+            await dialog_manager.start(state=BuyerStateGroup.menu, mode=StartMode.RESET_STACK)

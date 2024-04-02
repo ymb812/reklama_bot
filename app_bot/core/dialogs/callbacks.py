@@ -1,122 +1,238 @@
-import re
+import string
+import random
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import ManagedTextInput, MessageInput
 from aiogram_dialog.widgets.kbd import Button, Select
-from core.states.registration import RegistrationStateGroup
-from core.database.models import User, SupportRequest, Dispatcher, Post
-from core.keyboards.inline import support_kb
+from aiogram_dialog.widgets.common import ManagedScroll
+from core.states.agency import AgencyStateGroup
+from core.states.manager import ManagerStateGroup
+from core.states.bloger import BlogerStateGroup
+from core.database.models import User, Advertisement, Dispatcher, Post
+from core.keyboards.inline import handle_new_task_kb
 from core.utils.texts import _
 from settings import settings
 
 
-class CallBackHandler:
+def generate_random_string(length):
+    characters = string.ascii_letters + string.digits
+    return ''.join(random.choice(characters) for _ in range(length))
+
+
+async def switch_page(dialog_manager: DialogManager, scroll_id: str):
+    # switch page
+    scroll: ManagedScroll = dialog_manager.find(scroll_id)
+    current_page = await scroll.get_page()
+    if current_page == dialog_manager.dialog_data['pages'] - 1:
+        next_page = 0
+    else:
+        next_page = current_page + 1
+    await scroll.set_page(next_page)
+
+
+class AgencyManagerCallbackHandler:
     @staticmethod
-    async def entered_fio(
-            message: Message,
-            widget: ManagedTextInput,
-            dialog_manager: DialogManager,
-            value,
-    ):
-        # correct checker
-        fio = message.text.strip()
-        for i in fio:
-            if i.isdigit():
-                return
-        if fio.isdigit() or len(fio.split(' ')) > 5:
-            return
-
-        value: str
-        dialog_manager.dialog_data['fio'] = value
-        await dialog_manager.switch_to(state=RegistrationStateGroup.email_input)
-
-
-    @staticmethod
-    async def entered_email(
-            message: Message,
-            widget: ManagedTextInput,
-            dialog_manager: DialogManager,
-            value,
-    ):
-        # correct checker
-        email = message.text.strip()
-        email_regex = '^[\w\-\.]+@([\w-]+\.)+[\w-]{2,}$'
-        if not re.match(email_regex, email):
-            return
-
-        value: str
-        dialog_manager.dialog_data['email'] = value
-        await dialog_manager.switch_to(state=RegistrationStateGroup.phone_input)
-
-
-    @staticmethod
-    async def entered_phone(
-            message: Message,
-            widget: MessageInput,
-            dialog_manager: DialogManager,
-    ):
-        if message.contact:
-            phone = message.contact.phone_number
-        else:
-            phone = message.text.strip()
-
-        dialog_manager.dialog_data['phone'] = phone
-        await dialog_manager.switch_to(state=RegistrationStateGroup.confirm)
-
-
-    @staticmethod
-    async def confirm_data(
+    async def add_user(
             callback: CallbackQuery,
             widget: Button | Select,
             dialog_manager: DialogManager,
             item_id: str | None = None,
     ):
-        data = dialog_manager.dialog_data
+        # handle manager states
+        if 'manager_add_bloger' in callback.data:   # TODO: !!!!!!!!!!!!!!!
+            dialog_manager.dialog_data['type'] = 'bloger'
+            await dialog_manager.switch_to(ManagerStateGroup.create_bloger_link)
+            return
 
-        # send already_registered msg from DB
-        registered_post = await Post.get_or_none(id=settings.registered_post_id)
-        if registered_post:
-            await callback.message.answer(text=registered_post.text, reply_markup=ReplyKeyboardRemove())
-        else:
-            await callback.message.answer(text=_('REGISTERED'), reply_markup=ReplyKeyboardRemove())
+        # handle agency states
+        if 'add_bloger' in callback.data:
+            dialog_manager.dialog_data['type'] = 'bloger'
+        elif 'add_manager' in callback.data:
+            dialog_manager.dialog_data['type'] = 'manager'
 
-        await callback.message.answer(text=_('CHECK_QUESTION'), reply_markup=support_kb())
-
-        # delete notification order
-        await Dispatcher.filter(post_id=settings.notification_post_id, user_id=callback.from_user.id).delete()
-
-        # add reg data to DB
-        await User.filter(user_id=callback.from_user.id).update(
-            is_registered=True,
-            fio=data['fio'],
-            phone=data['phone'],
-            email=data['email'],
-        )
-
-        await dialog_manager.done()
+        await dialog_manager.switch_to(AgencyStateGroup.create_link)
 
 
     @staticmethod
-    async def entered_question(
+    async def list_of_users(
+            callback: CallbackQuery,
+            widget: Button | Select,
+            dialog_manager: DialogManager,
+            item_id: str | None = None,
+    ):
+        # handle manager states
+        if 'manager_blogers_list' in callback.data:  # TODO: !!!!!!!!!!!!!!!
+            dialog_manager.dialog_data['type'] = 'bloger'
+            await dialog_manager.switch_to(ManagerStateGroup.users_list)
+            return
+
+        # handle agency states
+        if 'blogers_list' in callback.data:
+            dialog_manager.dialog_data['type'] = 'bloger'
+
+        elif 'managers_list' in callback.data:
+            dialog_manager.dialog_data['type'] = 'manager'
+
+        await dialog_manager.switch_to(AgencyStateGroup.users_list)
+
+
+    @staticmethod
+    async def entered_username(
             message: Message,
             widget: ManagedTextInput,
             dialog_manager: DialogManager,
-            value,
+            value: str,
     ):
-        question = message.text.strip()
-        await SupportRequest.create(
-            user_id=message.from_user.id,
-            text=question,
-        )
+        # create invite link
+        link = settings.bot_link + generate_random_string(8)
 
-        # send question to admin
-        if message.from_user.username:
-            username = f'@{message.from_user.username}'
+        # handle tg_inst input
+        text = value.split(' ')
+        if len(text) == 2:
+            tg_username = text[0]
+            inst_username = text[1]
+
+            dialog_manager.dialog_data['type'] = 'bloger'
+            await User.create(
+                username=tg_username,
+                inst_username=inst_username,
+                link=link,
+                status=dialog_manager.dialog_data['type'],
+            )
+
+        # handle tgusername
+        elif len(text) == 1:
+            await User.create(
+                username=value.strip(),
+                link=link,
+                status=dialog_manager.dialog_data['type'],
+            )
         else:
-            username = f'<a href="tg://user?id={message.from_user.id}">ссылка</a>'
-        await dialog_manager.middleware_data['bot'].send_message(
-            chat_id=settings.admin_chat_id, text=_('QUESTION_FROM_USER', username=username, question=question)
+            await message.answer(text=_('WRONG_USERNAME_INPUT'))
+            return
+
+        await message.answer(text=_(f'Пользователь со статусом {dialog_manager.dialog_data["type"]} добавлен'))
+        await message.answer(link)
+
+
+    @staticmethod
+    async def selected_user(
+            callback: CallbackQuery,
+            widget: Select,
+            dialog_manager: DialogManager,
+            item_id: str,
+    ):
+        dialog_manager.dialog_data['user_id'] = item_id
+        if dialog_manager.dialog_data['type'] == 'bloger':
+            if widget.widget_id == '_bloger_select':  # TODO: !!!!!!!!!!!!!!!
+                await dialog_manager.switch_to(ManagerStateGroup.user_menu)
+            else:
+                await dialog_manager.switch_to(AgencyStateGroup.user_menu)
+        else:
+            await dialog_manager.switch_to(AgencyStateGroup.user_menu)
+
+
+    @staticmethod
+    async def entered_task(
+            message: Message,
+            widget: MessageInput,
+            dialog_manager: DialogManager,
+    ):
+        # handle file input
+        video_file_id, photo_file_id, document_file_id = None, None, None
+        if message.video:
+            video_file_id = message.video.file_id
+        elif message.photo:
+            photo_file_id = message.photo[-1].file_id
+        elif message.document:
+            document_file_id = message.document.file_id
+
+        # save new adv
+        manager = await User.get(user_id=message.from_user.id)
+        bloger_id = dialog_manager.dialog_data['user_id']
+        text = message.text
+        if not message.text:
+            text = message.caption
+
+        adv = await Advertisement.create(
+            text=text,
+            photo_file_id=photo_file_id,
+            video_file_id=video_file_id,
+            document_file_id=document_file_id,
+            manager_id=manager.id,
+            bloger_id=bloger_id
         )
 
-        await message.answer(text=_('QUESTION_INFO'))
-        await dialog_manager.done()
+        # # send task to the bloger
+        # bloger = await User.get_or_none(id=bloger_id)
+        # if bloger.user_id:
+        #     await dialog_manager.event.bot.send_message(
+        #         chat_id=bloger.user_id,
+        #         text=f'Новое ТЗ от менеджера @{message.from_user.username}',
+        #         reply_markup=handle_new_task_kb(adv_id=adv.id)
+        #     )
+        #     await message.forward(chat_id=bloger.user_id)
+        # else:
+        #     await message.answer('Блогер еще не зарегистрировался в боте')
+
+        await dialog_manager.switch_to(ManagerStateGroup.user_menu)
+
+
+    @staticmethod
+    async def ask_stats_from_user(
+            callback: CallbackQuery,
+            widget: Button | Select,
+            dialog_manager: DialogManager,
+            item_id: str | None = None,
+    ):
+        await callback.message.answer('Здесь будет запрос статистики у блогера')
+
+        await dialog_manager.switch_to(ManagerStateGroup.user_menu)
+
+
+    @staticmethod
+    async def check_stats(
+            callback: CallbackQuery,
+            widget: Button | Select,
+            dialog_manager: DialogManager,
+            item_id: str | None = None,
+    ):
+        await callback.message.answer('Здесь будет просмотр статистики')
+
+        await dialog_manager.switch_to(ManagerStateGroup.user_menu)
+
+
+class BlogerCallbackHandler:
+    @staticmethod
+    async def reklams_list(
+            callback: CallbackQuery,
+            widget: Button | Select,
+            dialog_manager: DialogManager,
+            item_id: str | None = None,
+    ):
+        if widget.widget_id == 'reklams_approve':
+            dialog_manager.dialog_data['is_paid'] = False
+        elif widget.widget_id == 'paid_reklams':
+            dialog_manager.dialog_data['is_paid'] = True
+
+        await dialog_manager.switch_to(BlogerStateGroup.reklams_list)
+
+
+    @staticmethod
+    async def approve_or_reject_reklam(
+            callback: CallbackQuery,
+            widget: Button | Select,
+            dialog_manager: DialogManager,
+    ):
+        adv = await Advertisement.get_or_none(id=dialog_manager.dialog_data['current_reklam_id'])
+        if widget.widget_id == 'approve_reklam':
+            # change adv status and send msg to manager
+            adv.is_approved_by_bloger = True
+
+            await callback.message.answer(text='Далее как-то происходит согласование')
+
+        elif widget.widget_id == 'reject_reklam':
+            await adv.delete()
+
+        await switch_page(dialog_manager=dialog_manager, scroll_id='reklam_scroll')
+        await adv.save()
