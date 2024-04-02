@@ -9,7 +9,7 @@ from core.states.manager import ManagerStateGroup
 from core.states.bloger import BlogerStateGroup
 from core.states.buyer import BuyerStateGroup
 from core.utils.texts import set_user_commands, set_admin_commands, _
-from core.database.models import User, Post, Dispatcher
+from core.database.models import User, StatusType, Post, Dispatcher
 from core.keyboards.inline import payment_kb
 from settings import settings
 
@@ -26,14 +26,14 @@ async def start_handler(
 
     # go to dialogs if already registered
     user = await User.get_or_none(user_id=message.from_user.id)
-    if user and user.status in ['agency', 'manager', 'bloger', 'buyer']:
-        if user.status == 'agency':
+    if user and user.status in StatusType:
+        if user.status == StatusType.agency:
             await dialog_manager.start(state=AgencyStateGroup.menu, mode=StartMode.RESET_STACK)
-        elif user.status == 'manager':
+        elif user.status == StatusType.manager:
             await dialog_manager.start(state=ManagerStateGroup.menu, mode=StartMode.RESET_STACK)
-        elif user.status == 'bloger':
+        elif user.status == StatusType.bloger:
             await dialog_manager.start(state=BlogerStateGroup.menu, mode=StartMode.RESET_STACK)
-        elif user.status == 'buyer':
+        elif user.status == StatusType.buyer:
             await dialog_manager.start(state=BuyerStateGroup.menu, mode=StartMode.RESET_STACK)
 
         return

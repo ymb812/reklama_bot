@@ -4,7 +4,7 @@ from datetime import datetime
 from aiogram import Bot, types
 from aiogram.utils.i18n import I18n
 from core.database import init
-from core.database.models import User, Dispatcher, Post
+from core.database.models import User, Dispatcher, Post, StatusType
 from settings import settings
 
 
@@ -58,17 +58,16 @@ class Broadcaster(object):
     async def send_content_to_users(
             cls,
             bot: Bot,
-            is_for_registered_only: bool = True,
-            is_for_all_users: bool = False,
+            status: StatusType | None = None,
             message: types.Message | None = None,
             broadcaster_post: Post | None = None
     ):
         sent_amount = 0
 
-        if is_for_all_users:
+        if not status:
             users_ids = await User.all()
         else:
-            users_ids = await User.filter(is_registered=is_for_registered_only).all()
+            users_ids = await User.filter(status=status).all()
 
         if not users_ids:
             return sent_amount
@@ -114,8 +113,7 @@ class Broadcaster(object):
             await cls.send_content_to_users(
                 bot=bot,
                 broadcaster_post=post,
-                is_for_registered_only=order.is_for_registered_only,
-                is_for_all_users=order.is_for_all_users,
+                status=order.status,
             )
 
         # delete order

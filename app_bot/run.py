@@ -1,5 +1,6 @@
 import asyncio
 import core.middlewares
+from core.middlewares.ban_middleware import BanMiddleware
 from aiogram import Bot, Dispatcher
 from aiogram_dialog import setup_dialogs
 from settings import settings
@@ -17,6 +18,8 @@ storage = RedisStorage.from_url(
 )
 dp = Dispatcher(storage=storage)
 core.middlewares.i18n.setup(dp)
+dp.message.middleware(BanMiddleware())
+dp.callback_query.middleware(BanMiddleware())
 setup_dialogs(dp)
 
 for _r in routers + dialogues:

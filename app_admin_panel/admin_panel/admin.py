@@ -1,7 +1,7 @@
 from django.contrib import admin
 from import_export.admin import ExportActionModelAdmin, ImportExportModelAdmin
 from import_export.resources import ModelResource
-from admin_panel.models import User, SupportRequest, Dispatcher, Post
+from admin_panel.models import User, Advertisement, Dispatcher, Post
 
 
 class CustomImportExport(ImportExportModelAdmin, ExportActionModelAdmin):
@@ -18,13 +18,14 @@ class UserResource(ModelResource):
 @admin.register(User)
 class UserAdmin(CustomImportExport):
     resource_classes = [UserResource]
-    list_display = ('user_id', 'first_name', 'created_at', 'is_registered')
-    list_display_links = ('user_id', 'first_name',)
+    list_display = ('user_id', 'username', 'status', 'is_banned', 'link', 'created_at')
+    list_display_links = ('user_id', )
+    list_editable = ('status', 'username', 'is_banned')
 
 
-@admin.register(SupportRequest)
-class SupportRequestAdmin(CustomImportExport):
-    list_display = [field.name for field in SupportRequest._meta.fields]
+@admin.register(Advertisement)
+class AdvertisementAdmin(CustomImportExport):
+    list_display = [field.name for field in Advertisement._meta.fields]
 
 
 @admin.register(Dispatcher)
