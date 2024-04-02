@@ -48,9 +48,6 @@ class Advertisement(models.Model):
     document_file_id = models.CharField(max_length=256, blank=True, null=True)
 
     is_approved_by_bloger = models.BooleanField(default=False, blank=True)
-    is_approved_by_manager = models.BooleanField(default=False, blank=True)
-    is_approved_by_buyer = models.BooleanField(default=False, blank=True)  # dialog after the paid reklams
-
     is_paid = models.BooleanField(default=False, blank=True)
 
     agency = models.ForeignKey('User', on_delete=models.CASCADE, related_name='agencies', null=True, blank=True)
