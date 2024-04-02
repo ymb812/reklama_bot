@@ -232,7 +232,7 @@ class BlogerCallbackHandler:
             await callback.message.answer(text='Далее как-то происходит согласование')
 
         elif widget.widget_id == 'reject_reklam':
-            await adv.delete()
+            pass
 
         await switch_page(dialog_manager=dialog_manager, scroll_id='reklam_scroll')
         await adv.save()
