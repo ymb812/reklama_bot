@@ -2,8 +2,16 @@ import logging
 from datetime import datetime
 from tortoise import fields
 from tortoise.models import Model
+from enum import Enum
 
 logger = logging.getLogger(__name__)
+
+
+class StatusType(Enum):
+    agency = 'agency'
+    manager = 'manager'
+    bloger = 'bloger'
+    buyer = 'buyer'
 
 
 class User(Model):
@@ -15,8 +23,11 @@ class User(Model):
     user_id = fields.BigIntField(unique=True, null=True)
     username = fields.CharField(max_length=32, null=True)
     inst_username = fields.CharField(max_length=32, null=True)
-    status = fields.CharField(max_length=32, null=True)  # agency/manager/bloger/buyer
+    status = fields.CharEnumField(enum_type=StatusType, max_length=64, null=True)
     link = fields.CharField(max_length=64, unique=True, null=True)
+
+    manager = fields.ForeignKeyField('models.User', to_field='id', related_name='to_manager', null=True)
+    agency = fields.ForeignKeyField('models.User', to_field='id', related_name='to_agency', null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
@@ -59,8 +70,9 @@ class Advertisement(Model):
 
     is_paid = fields.BooleanField(default=False)  # mb useless cuz its equally to the 'is_approved_by_manager'
 
-    bloger = fields.ForeignKeyField('models.User', to_field='id', related_name='blogers', null=True)
+    agency = fields.ForeignKeyField('models.User', to_field='id', related_name='agencies', null=True)
     manager = fields.ForeignKeyField('models.User', to_field='id', related_name='managers', null=True)
+    bloger = fields.ForeignKeyField('models.User', to_field='id', related_name='blogers', null=True)
     buyer = fields.ForeignKeyField('models.User', to_field='id', related_name='buyers', null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -73,8 +85,7 @@ class Dispatcher(Model):
 
     id = fields.BigIntField(pk=True)
     post = fields.ForeignKeyField('models.Post', to_field='id')
-    is_for_registered_only = fields.BooleanField(default=True)
-    is_for_all_users = fields.BooleanField(default=False)
+    status = fields.CharEnumField(enum_type=StatusType, max_length=64, null=True)
     user = fields.ForeignKeyField('models.User', to_field='id', null=True)
     send_at = fields.DatetimeField()
 
