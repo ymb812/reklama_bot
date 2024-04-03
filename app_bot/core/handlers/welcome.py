@@ -79,9 +79,9 @@ async def start_handler(
         await user.save()
 
         # start manager/bloger/buyer dialog
-        if user.status == 'manager':
+        if user.status == StatusType.manager:
             await dialog_manager.start(state=ManagerStateGroup.menu, mode=StartMode.RESET_STACK)
-        elif user.status == 'bloger':
+        elif user.status == StatusType.bloger:
             await dialog_manager.start(state=BlogerStateGroup.menu, mode=StartMode.RESET_STACK)
-        elif user.status == 'buyer':
+        elif user.status == StatusType.buyer:
             await dialog_manager.start(state=BuyerStateGroup.menu, mode=StartMode.RESET_STACK)

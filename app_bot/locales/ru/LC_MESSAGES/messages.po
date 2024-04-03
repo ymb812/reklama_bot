@@ -65,6 +65,46 @@ msgid "SUPPORT_BUTTON"
 msgstr "Поддержка"
 
 
+msgid "ADD_BLOGER_BUTTON"
+msgstr "Добавить блогера"
+
+
+msgid "ADD_MANAGER_BUTTON"
+msgstr "Добавить менеджера"
+
+
+msgid "BLOGERS_LIST_BUTTON"
+msgstr "Список блогеров"
+
+
+msgid "MANAGERS_LIST_BUTTON"
+msgstr "Список менеджеров"
+
+
+msgid "REKLAMS_LIST_BUTTON"
+msgstr "Список реклам"
+
+
+msgid "SEND_TASK_BUTTON"
+msgstr "Отправить ТЗ"
+
+
+msgid "STATS_BUTTON"
+msgstr "Статистика"
+
+
+msgid "CHECK_STATS_BUTTON"
+msgstr "Посмотреть статистику"
+
+
+msgid "ASK_STATS_BUTTON"
+msgstr "Запросить статистику"
+
+
+msgid "ADD_BUYER_BUTTON"
+msgstr "Добавить закупщика"
+
+
 # texts
 msgid "CANCEL_MSG"
 msgstr "Никакие цепочки процессов не запущены. Отменять нечего."
@@ -96,10 +136,34 @@ msgid "WELCOME_MSG"
 msgstr "Приветственное сообщение + ссылка на видео"
 
 
+msgid "INPUT_USERNAME"
+msgstr "Введите юзернейм менеджера"
+
+
+msgid "INPUT_BUYER_USERNAME"
+msgstr "Введите ник заказчика, с которым согласовали рекламу"
+
+
 msgid "INPUT_USERNAME_AND_INST"
 msgstr "Введите tg и inst ник блогера через пробел: tgusername instusername\n\n"
 
 "Пример: <code>username1 username2</code>"
+
+
+msgid "PICK_ACTION"
+msgstr "Выберите действие с помощью кнопок 👇"
+
+
+msgid "PICK_USER"
+msgstr "Выберете пользователя 👇"
+
+
+msgid "INPUT_TASK"
+msgstr "Введите ТЗ (фото/видео/файл/текст)"
+
+
+msgid "THERE_IS_NO_REKLAMS"
+msgstr "Реклам нет"
 
 
 # format
@@ -130,3 +194,7 @@ msgstr "Данные введены верно?\n\n"
 msgid "QUESTION_FROM_USER"
 msgstr "<b>ℹ️ Вопрос от пользователя {username}</b>\n\n"
 "{question}"
+
+
+msgid "PICK_BLOGER_ACTION"
+msgstr "Выберите действие с блогером {inst_username}"

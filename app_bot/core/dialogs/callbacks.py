@@ -5,8 +5,10 @@ from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import ManagedTextInput, MessageInput
 from aiogram_dialog.widgets.kbd import Button, Select
 from aiogram_dialog.widgets.common import ManagedScroll
+from core.dialogs.custom_content import get_dialog_data
 from core.states.agency import AgencyStateGroup
 from core.states.manager import ManagerStateGroup
+from core.states.buyer import BuyerStateGroup
 from core.states.bloger import BlogerStateGroup
 from core.database.models import User, Advertisement, Dispatcher, Post
 from core.keyboards.inline import handle_new_task_kb
@@ -39,18 +41,19 @@ class AgencyManagerCallbackHandler:
             item_id: str | None = None,
     ):
         # handle manager states
-        if 'manager_add_bloger' in callback.data:   # TODO: !!!!!!!!!!!!!!!
+        if 'manager_add_bloger' in callback.data:
             dialog_manager.dialog_data['type'] = 'bloger'
             await dialog_manager.switch_to(ManagerStateGroup.create_bloger_link)
-            return
 
         # handle agency states
-        if 'add_bloger' in callback.data:
+        elif 'add_bloger' in callback.data:
             dialog_manager.dialog_data['type'] = 'bloger'
+            dialog_manager.dialog_data['is_agency'] = True
+            await dialog_manager.start(state=ManagerStateGroup.create_bloger_link, data=dialog_manager.dialog_data)
+
         elif 'add_manager' in callback.data:
             dialog_manager.dialog_data['type'] = 'manager'
-
-        await dialog_manager.switch_to(AgencyStateGroup.create_link)
+            await dialog_manager.switch_to(AgencyStateGroup.create_link)
 
 
     @staticmethod
@@ -61,19 +64,19 @@ class AgencyManagerCallbackHandler:
             item_id: str | None = None,
     ):
         # handle manager states
-        if 'manager_blogers_list' in callback.data:  # TODO: !!!!!!!!!!!!!!!
+        if 'manager_blogers_list' in callback.data:
             dialog_manager.dialog_data['type'] = 'bloger'
             await dialog_manager.switch_to(ManagerStateGroup.users_list)
-            return
 
         # handle agency states
-        if 'blogers_list' in callback.data:
+        elif 'blogers_list' in callback.data:
             dialog_manager.dialog_data['type'] = 'bloger'
+            dialog_manager.dialog_data['is_agency'] = True
+            await dialog_manager.start(state=ManagerStateGroup.users_list, data=dialog_manager.dialog_data)
 
         elif 'managers_list' in callback.data:
             dialog_manager.dialog_data['type'] = 'manager'
-
-        await dialog_manager.switch_to(AgencyStateGroup.users_list)
+            await dialog_manager.switch_to(AgencyStateGroup.users_list)
 
 
     @staticmethod
@@ -83,36 +86,44 @@ class AgencyManagerCallbackHandler:
             dialog_manager: DialogManager,
             value: str,
     ):
+        status = get_dialog_data(dialog_manager=dialog_manager, key='type')
         # create invite link
         link = settings.bot_link + generate_random_string(8)
 
         # handle tg_inst input
         text = value.split(' ')
+        tg_username = text[0]
+        inst_username = None
+
+        # add inst_username
         if len(text) == 2:
             tg_username = text[0]
             inst_username = text[1]
-
-            dialog_manager.dialog_data['type'] = 'bloger'
-            await User.create(
-                username=tg_username,
-                inst_username=inst_username,
-                link=link,
-                status=dialog_manager.dialog_data['type'],
-            )
-
-        # handle tgusername
-        elif len(text) == 1:
-            await User.create(
-                username=value.strip(),
-                link=link,
-                status=dialog_manager.dialog_data['type'],
-            )
-        else:
+        elif len(text) > 2:
             await message.answer(text=_('WRONG_USERNAME_INPUT'))
             return
 
-        await message.answer(text=_(f'Пользователь со статусом {dialog_manager.dialog_data["type"]} добавлен'))
+        # add new user and send link
+        user = await User.create(
+            username=tg_username,
+            inst_username=inst_username,
+            link=link,
+            status=status,
+            manager_id=(await User.get(user_id=message.from_user.id)).id
+        )
+
+        await message.answer(
+            text=_(f'Пользователь со статусом {status} добавлен')
+        )
         await message.answer(link)
+
+        # handle new buyer
+        if status == 'buyer':
+            await Advertisement.filter(id=dialog_manager.dialog_data['current_reklam_id']).update(
+                is_paid=True,
+                buyer_id=user.id,
+            )
+            await dialog_manager.switch_to(ManagerStateGroup.reklams_list)
 
 
     @staticmethod
@@ -123,11 +134,8 @@ class AgencyManagerCallbackHandler:
             item_id: str,
     ):
         dialog_manager.dialog_data['user_id'] = item_id
-        if dialog_manager.dialog_data['type'] == 'bloger':
-            if widget.widget_id == '_bloger_select':  # TODO: !!!!!!!!!!!!!!!
-                await dialog_manager.switch_to(ManagerStateGroup.user_menu)
-            else:
-                await dialog_manager.switch_to(AgencyStateGroup.user_menu)
+        if get_dialog_data(dialog_manager=dialog_manager, key='type') == 'bloger':
+            await dialog_manager.switch_to(ManagerStateGroup.user_menu)  # 'bloger' could be only from Manager
         else:
             await dialog_manager.switch_to(AgencyStateGroup.user_menu)
 
@@ -163,18 +171,6 @@ class AgencyManagerCallbackHandler:
             bloger_id=bloger_id
         )
 
-        # # send task to the bloger
-        # bloger = await User.get_or_none(id=bloger_id)
-        # if bloger.user_id:
-        #     await dialog_manager.event.bot.send_message(
-        #         chat_id=bloger.user_id,
-        #         text=f'Новое ТЗ от менеджера @{message.from_user.username}',
-        #         reply_markup=handle_new_task_kb(adv_id=adv.id)
-        #     )
-        #     await message.forward(chat_id=bloger.user_id)
-        # else:
-        #     await message.answer('Блогер еще не зарегистрировался в боте')
-
         await dialog_manager.switch_to(ManagerStateGroup.user_menu)
 
 
@@ -202,6 +198,44 @@ class AgencyManagerCallbackHandler:
         await dialog_manager.switch_to(ManagerStateGroup.user_menu)
 
 
+    @staticmethod
+    async def list_of_reklams(
+            callback: CallbackQuery,
+            widget: Button | Select,
+            dialog_manager: DialogManager,
+            item_id: str | None = None,
+    ):
+        dialog_manager.dialog_data['data_for_manager'] = True
+        await dialog_manager.switch_to(ManagerStateGroup.reklams_list)
+
+
+    @staticmethod
+    async def list_of_reklams_for_buyer(
+            callback: CallbackQuery,
+            widget: Button | Select,
+            dialog_manager: DialogManager,
+            item_id: str | None = None,
+    ):
+        reklams = await Advertisement.filter(buyer__user_id=dialog_manager.event.from_user.id).all()
+        if not reklams:
+            await callback.message.answer(text=_('THERE_IS_NO_REKLAMS'))
+            return
+
+        dialog_manager.dialog_data['data_for_buyer'] = True
+        await dialog_manager.switch_to(BuyerStateGroup.reklams_list)
+
+
+    @staticmethod
+    async def add_buyer(
+            callback: CallbackQuery,
+            widget: Button | Select,
+            dialog_manager: DialogManager,
+            item_id: str | None = None,
+    ):
+        dialog_manager.dialog_data['type'] = 'buyer'
+        await dialog_manager.switch_to(ManagerStateGroup.create_bloger_link)
+
+
 class BlogerCallbackHandler:
     @staticmethod
     async def reklams_list(
@@ -214,6 +248,15 @@ class BlogerCallbackHandler:
             dialog_manager.dialog_data['is_paid'] = False
         elif widget.widget_id == 'paid_reklams':
             dialog_manager.dialog_data['is_paid'] = True
+
+        # check is there any reklams
+        if not dialog_manager.dialog_data.get('is_paid'):
+            reklams = await Advertisement.filter(is_approved_by_bloger=False).all()
+        else:
+            reklams = await Advertisement.filter(is_paid=True).all()
+        if not reklams:
+            await callback.message.answer(text=_('THERE_IS_NO_REKLAMS'))
+            return
 
         await dialog_manager.switch_to(BlogerStateGroup.reklams_list)
 
@@ -236,3 +279,7 @@ class BlogerCallbackHandler:
 
         await switch_page(dialog_manager=dialog_manager, scroll_id='reklam_scroll')
         await adv.save()
+
+        # last page
+        if dialog_manager.dialog_data['pages'] == 1:
+            await dialog_manager.switch_to(BlogerStateGroup.menu)

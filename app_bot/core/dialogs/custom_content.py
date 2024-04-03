@@ -49,3 +49,7 @@ class CustomPager(ScrollingGroup):
                 ),
             ],
         ]
+
+
+def get_dialog_data(dialog_manager: DialogManager, key: str):
+    return dialog_manager.dialog_data.get(key) or (dialog_manager.start_data or {}).get(key)

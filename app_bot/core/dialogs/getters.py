@@ -2,6 +2,7 @@ from aiogram.types import ContentType
 from aiogram_dialog import DialogManager
 from aiogram_dialog.api.entities import MediaAttachment
 from core.database.models import User, Advertisement
+from core.dialogs.custom_content import get_dialog_data
 
 
 async def get_input_data(dialog_manager: DialogManager, **kwargs):
@@ -10,7 +11,8 @@ async def get_input_data(dialog_manager: DialogManager, **kwargs):
 
 
 async def get_users(dialog_manager: DialogManager, **kwargs):
-    users = await User.filter(status=dialog_manager.dialog_data['type']).all()
+    status = get_dialog_data(dialog_manager=dialog_manager, key='type')
+    users = await User.filter(status=status).all()
 
     return {
         'users': users
@@ -18,7 +20,8 @@ async def get_users(dialog_manager: DialogManager, **kwargs):
 
 
 async def get_user(dialog_manager: DialogManager, **kwargs):
-    user = await User.get_or_none(id=dialog_manager.dialog_data['user_id'])
+    user_id = get_dialog_data(dialog_manager=dialog_manager, key='user_id')
+    user = await User.get_or_none(id=user_id)
     if not user:
         raise ValueError
 
@@ -30,13 +33,23 @@ async def get_user(dialog_manager: DialogManager, **kwargs):
 async def get_reklams_by_status(dialog_manager: DialogManager, **kwargs) -> dict[str, list[Advertisement]]:
     current_page = await dialog_manager.find('reklam_scroll').get_page()
 
-    if not dialog_manager.dialog_data.get('is_paid'):
-        reklams = await Advertisement.filter(is_approved_by_bloger=False).all()
+    if get_dialog_data(dialog_manager=dialog_manager, key='data_for_buyer'):  # reklams for buyer
+        reklams = await Advertisement.filter(buyer__user_id=dialog_manager.event.from_user.id).all()
+
+    elif not get_dialog_data(dialog_manager=dialog_manager, key='data_for_manager'):
+        if not dialog_manager.dialog_data.get('is_paid'):
+            reklams = await Advertisement.filter(is_approved_by_bloger=False).all()
+        else:
+            reklams = await Advertisement.filter(is_paid=True).all()
     else:
-        reklams = await Advertisement.filter(is_paid=True).all()
+        # reklams list for manager
+        reklams = await Advertisement.filter(manager__user_id=dialog_manager.event.from_user.id).all()
+
     if not reklams:
         raise ValueError
 
+    if len(reklams) == 1:
+        current_page = 0  # bypass error if we dynamically delete page
     current_reklam = reklams[current_page]
 
     media_content = None
@@ -50,9 +63,30 @@ async def get_reklams_by_status(dialog_manager: DialogManager, **kwargs) -> dict
     dialog_manager.dialog_data['pages'] = len(reklams)
     dialog_manager.dialog_data['current_reklam_id'] = current_reklam.id
 
+
+    # get data for manager
+    data_for_manager = None                                                    # TODO: AFTER 'or' IS TMP
+    if get_dialog_data(dialog_manager=dialog_manager, key='data_for_manager') or get_dialog_data(dialog_manager=dialog_manager, key='data_for_buyer'):
+        data_for_manager = {
+            'description': current_reklam.text,
+            'is_approved_by_bloger': current_reklam.is_approved_by_bloger,
+            'is_paid': current_reklam.is_paid,
+            'bloger_tg_username': (await current_reklam.bloger).username if (await current_reklam.bloger) else None,
+            'bloger_inst_username': (await current_reklam.bloger).inst_username if (await current_reklam.bloger) else None,
+            'buyer_tg_username': (await current_reklam.buyer).username if (await current_reklam.buyer) else None,
+        }
+        data_for_manager = f'{data_for_manager["description"]}\n\n' \
+                           f'{"Согласовано с блогером" if data_for_manager["is_approved_by_bloger"] else "Не согласовано с блогером"}\n' \
+                           f'{"Оплачено" if data_for_manager["is_paid"] else "Не оплачено"}\n\n' \
+                           f'ТГ блогера: {data_for_manager["bloger_tg_username"]}\n' \
+                           f'Inst блогера: {data_for_manager["bloger_inst_username"]}\n' \
+                           f'ТГ заказчика: {data_for_manager["buyer_tg_username"]}\n'
+
     return {
         'pages': len(reklams),
         'current_page': current_page + 1,
         'media_content': media_content,
         'description':  current_reklam.text,
+        'data_for_manager': data_for_manager,
+        'is_paid': current_reklam.is_paid,
     }

@@ -28,7 +28,6 @@ class User(Model):
     is_banned = fields.BooleanField(default=False)
 
     manager = fields.ForeignKeyField('models.User', to_field='id', related_name='to_manager', null=True)
-    agency = fields.ForeignKeyField('models.User', to_field='id', related_name='to_agency', null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
@@ -66,10 +65,7 @@ class Advertisement(Model):
     document_file_id = fields.CharField(max_length=256, null=True)
 
     is_approved_by_bloger = fields.BooleanField(default=False)
-    is_approved_by_manager = fields.BooleanField(default=False)
-    is_approved_by_buyer = fields.BooleanField(default=False)  # dialog after the paid reklams
-
-    is_paid = fields.BooleanField(default=False)  # mb useless cuz its equally to the 'is_approved_by_manager'
+    is_paid = fields.BooleanField(default=False)
 
     agency = fields.ForeignKeyField('models.User', to_field='id', related_name='agencies', null=True)
     manager = fields.ForeignKeyField('models.User', to_field='id', related_name='managers', null=True)
