@@ -16,10 +16,10 @@ agency_dialog = Dialog(
     # menu
     Window(
         Const(text=_('PICK_ACTION')),
-        Button(Const(text=_('ADD_BLOGER')), id='add_bloger', on_click=AgencyManagerCallbackHandler.add_user),
-        Button(Const(text=_('ADD_MANAGER')), id='add_manager', on_click=AgencyManagerCallbackHandler.add_user),
-        Button(Const(text=_('BLOGERS_LIST')), id='blogers_list', on_click=AgencyManagerCallbackHandler.list_of_users),
-        Button(Const(text=_('MANAGERS_LIST')), id='managers_list', on_click=AgencyManagerCallbackHandler.list_of_users),
+        Button(Const(text=_('ADD_BLOGER_BUTTON')), id='add_bloger', on_click=AgencyManagerCallbackHandler.add_user),
+        Button(Const(text=_('ADD_MANAGER_BUTTON')), id='add_manager', on_click=AgencyManagerCallbackHandler.add_user),
+        Button(Const(text=_('BLOGERS_LIST_BUTTON')), id='blogers_list', on_click=AgencyManagerCallbackHandler.list_of_users),
+        Button(Const(text=_('MANAGERS_LIST_BUTTON')), id='managers_list', on_click=AgencyManagerCallbackHandler.list_of_users),
         state=AgencyStateGroup.menu,
     ),
 
