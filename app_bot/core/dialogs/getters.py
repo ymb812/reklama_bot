@@ -33,20 +33,37 @@ async def get_user(dialog_manager: DialogManager, **kwargs):
 async def get_reklams_by_status(dialog_manager: DialogManager, **kwargs) -> dict[str, list[Advertisement]]:
     current_page = await dialog_manager.find('reklam_scroll').get_page()
 
-    if get_dialog_data(dialog_manager=dialog_manager, key='data_for_buyer'):  # reklams for buyer
+    # reklams for buyer
+    if get_dialog_data(dialog_manager=dialog_manager, key='data_for_buyer'):
         reklams = await Advertisement.filter(buyer__user_id=dialog_manager.event.from_user.id).all()
 
-    elif not get_dialog_data(dialog_manager=dialog_manager, key='data_for_manager'):
+    # reklams for manager and agency
+    elif get_dialog_data(dialog_manager=dialog_manager, key='data_for_manager'):
+        # agency
+        if get_dialog_data(dialog_manager=dialog_manager, key='is_agency'):
+            # get agency reklams by manager
+            manager_id = get_dialog_data(dialog_manager=dialog_manager, key='manager_by_agency_id')
+            if manager_id:
+                reklams = await Advertisement.filter(manager_id=manager_id).all()
+
+            # get agency reklams
+            else:
+                reklams = await Advertisement.filter(agency__user_id=dialog_manager.event.from_user.id).all()
+
+        # manager
+        else:
+            reklams = await Advertisement.filter(manager__user_id=dialog_manager.event.from_user.id).all()
+
+    # reklams for bloger
+    else:
         if not dialog_manager.dialog_data.get('is_paid'):
             reklams = await Advertisement.filter(is_approved_by_bloger=False).all()
         else:
             reklams = await Advertisement.filter(is_paid=True).all()
-    else:
-        # reklams list for manager
-        reklams = await Advertisement.filter(manager__user_id=dialog_manager.event.from_user.id).all()
 
     if not reklams:
         raise ValueError
+
 
     if len(reklams) == 1:
         current_page = 0  # bypass error if we dynamically delete page
@@ -65,7 +82,7 @@ async def get_reklams_by_status(dialog_manager: DialogManager, **kwargs) -> dict
 
 
     # get data for manager
-    data_for_manager = None                                                    # TODO: AFTER 'or' IS TMP
+    data_for_manager = None                                                    # TODO: AFTER 'or' IS TMP FOR BUYER
     if get_dialog_data(dialog_manager=dialog_manager, key='data_for_manager') or get_dialog_data(dialog_manager=dialog_manager, key='data_for_buyer'):
         data_for_manager = {
             'description': current_reklam.text,

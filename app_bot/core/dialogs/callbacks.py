@@ -10,8 +10,7 @@ from core.states.agency import AgencyStateGroup
 from core.states.manager import ManagerStateGroup
 from core.states.buyer import BuyerStateGroup
 from core.states.bloger import BlogerStateGroup
-from core.database.models import User, Advertisement, Dispatcher, Post
-from core.keyboards.inline import handle_new_task_kb
+from core.database.models import User, Advertisement, StatusType
 from core.utils.texts import _
 from settings import settings
 
@@ -156,7 +155,11 @@ class AgencyManagerCallbackHandler:
             document_file_id = message.document.file_id
 
         # save new adv
+        agency_id = None
         manager = await User.get(user_id=message.from_user.id)
+        if manager.status == StatusType.agency:  # check is manager agency
+            agency_id = manager.id
+
         bloger_id = dialog_manager.dialog_data['user_id']
         text = message.text
         if not message.text:
@@ -167,6 +170,7 @@ class AgencyManagerCallbackHandler:
             photo_file_id=photo_file_id,
             video_file_id=video_file_id,
             document_file_id=document_file_id,
+            agency_id=agency_id,
             manager_id=manager.id,
             bloger_id=bloger_id
         )
@@ -207,6 +211,39 @@ class AgencyManagerCallbackHandler:
     ):
         dialog_manager.dialog_data['data_for_manager'] = True
         await dialog_manager.switch_to(ManagerStateGroup.reklams_list)
+
+
+    @staticmethod
+    async def list_of_reklams_for_agency(
+            callback: CallbackQuery,
+            widget: Button | Select,
+            dialog_manager: DialogManager,
+            item_id: str | None = None,
+    ):
+        dialog_manager.dialog_data['data_for_manager'] = True
+        dialog_manager.dialog_data['is_agency'] = True
+
+        # reklams created by agency
+        if widget.widget_id == 'agency_reklams_list':
+            # just check to handle ValueError
+            reklams = await Advertisement.filter(agency__user_id=dialog_manager.event.from_user.id).all()
+            if not reklams:
+                await callback.message.answer(text=_('THERE_IS_NO_REKLAMS'))
+                return
+
+        # reklams by agency's manager
+        elif widget.widget_id == 'agency_manager_reklams':
+            # save agency's picked manager to check his reklams
+            manager_id = get_dialog_data(dialog_manager=dialog_manager, key='user_id')
+
+            reklams = await Advertisement.filter(manager_id=manager_id).all()
+            if not reklams:
+                await callback.message.answer(text=_('THERE_IS_NO_REKLAMS'))
+                return
+
+            dialog_manager.dialog_data['manager_by_agency_id'] = manager_id
+
+        await dialog_manager.start(state=ManagerStateGroup.reklams_list, data=dialog_manager.dialog_data)
 
 
     @staticmethod
