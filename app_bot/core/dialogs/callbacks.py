@@ -103,7 +103,7 @@ class AgencyManagerCallbackHandler:
             return
 
         # add new user and send link
-        await User.create(
+        user = await User.create(
             username=tg_username,
             inst_username=inst_username,
             link=link,
@@ -118,7 +118,10 @@ class AgencyManagerCallbackHandler:
 
         # handle new buyer
         if status == 'buyer':
-            await Advertisement.filter(id=dialog_manager.dialog_data['current_reklam_id']).update(is_paid=True)
+            await Advertisement.filter(id=dialog_manager.dialog_data['current_reklam_id']).update(
+                is_paid=True,
+                buyer_id=user.id,
+            )
             await dialog_manager.switch_to(ManagerStateGroup.reklams_list)
 
 

@@ -21,21 +21,14 @@ specific_back_buttons = Column(
             Const(text=_('BACK_BUTTON')),
             id='go_to_manager',
             state=ManagerStateGroup.menu,
-            when=F.get('start_data') == None and F.get('dialog_data').get('type') != 'buyer',
+            when=F.get('start_data') == None,
         ),
         # manager from agency
         Start(
             Const(text=_('BACK_BUTTON')),
             id='go_to_agency',
             state=AgencyStateGroup.menu,
-            when=F.get('start_data').get('is_agency') == True and F.get('dialog_data').get('type') != 'buyer',
-        ),
-        # go back to the reklams list
-        SwitchTo(
-            Const(text=_('BACK_BUTTON')),
-            id='go_to_reklams',
-            state=ManagerStateGroup.reklams_list,
-            when=F['dialog_data']['type'] == 'buyer',
+            when=F.get('start_data').get('is_agency') == True,
         ),
 )
 
@@ -52,8 +45,8 @@ manager_dialog = Dialog(
 
     # username input
     Window(
-        Const(text=_('INPUT_USERNAME_AND_INST'), when=F['dialog_data']['type'] != 'buyer'),
-        Const(text=_('Введите ник заказчика, с которым согласовали рекламу'), when=F['dialog_data']['type'] == 'buyer'),
+        Const(text=_('INPUT_USERNAME_AND_INST'), when=F.get('dialog_data').get('type') != 'buyer'),
+        Const(text=_('Введите ник заказчика, с которым согласовали рекламу'), when=F.get('dialog_data').get('type') == 'buyer'),
         TextInput(
             id='input_tg_inst',
             type_factory=str,
