@@ -8,6 +8,7 @@ from aiogram_dialog.widgets.common import ManagedScroll
 from core.dialogs.custom_content import get_dialog_data
 from core.states.agency import AgencyStateGroup
 from core.states.manager import ManagerStateGroup
+from core.states.buyer import BuyerStateGroup
 from core.states.bloger import BlogerStateGroup
 from core.database.models import User, Advertisement, Dispatcher, Post
 from core.keyboards.inline import handle_new_task_kb
@@ -206,6 +207,17 @@ class AgencyManagerCallbackHandler:
     ):
         dialog_manager.dialog_data['data_for_manager'] = True
         await dialog_manager.switch_to(ManagerStateGroup.reklams_list)
+
+
+    @staticmethod
+    async def list_of_reklams_for_buyer(
+            callback: CallbackQuery,
+            widget: Button | Select,
+            dialog_manager: DialogManager,
+            item_id: str | None = None,
+    ):
+        dialog_manager.dialog_data['data_for_buyer'] = True
+        await dialog_manager.switch_to(BuyerStateGroup.reklams_list)
 
 
     @staticmethod

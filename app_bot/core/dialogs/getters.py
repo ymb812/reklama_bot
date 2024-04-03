@@ -33,7 +33,10 @@ async def get_user(dialog_manager: DialogManager, **kwargs):
 async def get_reklams_by_status(dialog_manager: DialogManager, **kwargs) -> dict[str, list[Advertisement]]:
     current_page = await dialog_manager.find('reklam_scroll').get_page()
 
-    if not get_dialog_data(dialog_manager=dialog_manager, key='data_for_manager'):
+    if get_dialog_data(dialog_manager=dialog_manager, key='data_for_buyer'):  # reklams for buyer
+        reklams = await Advertisement.filter(buyer__user_id=dialog_manager.event.from_user.id).all()
+
+    elif not get_dialog_data(dialog_manager=dialog_manager, key='data_for_manager'):
         if not dialog_manager.dialog_data.get('is_paid'):
             reklams = await Advertisement.filter(is_approved_by_bloger=False).all()
         else:
@@ -62,8 +65,8 @@ async def get_reklams_by_status(dialog_manager: DialogManager, **kwargs) -> dict
 
 
     # get data for manager
-    data_for_manager = None
-    if get_dialog_data(dialog_manager=dialog_manager, key='data_for_manager'):
+    data_for_manager = None                                                    # TODO: AFTER 'or' IS TMP
+    if get_dialog_data(dialog_manager=dialog_manager, key='data_for_manager') or get_dialog_data(dialog_manager=dialog_manager, key='data_for_buyer'):
         data_for_manager = {
             'description': current_reklam.text,
             'is_approved_by_bloger': current_reklam.is_approved_by_bloger,
