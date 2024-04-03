@@ -20,7 +20,11 @@ buyer_dialog = Dialog(
     # menu
     Window(
         Const(text=_('PICK_ACTION')),
-        Button(Const(text=_('REKLAMS_LIST')), id='reklams_list', on_click=AgencyManagerCallbackHandler.list_of_reklams_for_buyer),
+        Button(
+            Const(text=_('REKLAMS_LIST_BUTTON')),
+            id='reklams_list',
+            on_click=AgencyManagerCallbackHandler.list_of_reklams_for_buyer
+        ),
         state=BuyerStateGroup.menu,
     ),
 

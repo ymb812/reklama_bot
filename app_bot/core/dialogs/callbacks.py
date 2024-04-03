@@ -216,6 +216,11 @@ class AgencyManagerCallbackHandler:
             dialog_manager: DialogManager,
             item_id: str | None = None,
     ):
+        reklams = await Advertisement.filter(buyer__user_id=dialog_manager.event.from_user.id).all()
+        if not reklams:
+            await callback.message.answer(text=_('THERE_IS_NO_REKLAMS'))
+            return
+
         dialog_manager.dialog_data['data_for_buyer'] = True
         await dialog_manager.switch_to(BuyerStateGroup.reklams_list)
 
@@ -250,7 +255,7 @@ class BlogerCallbackHandler:
         else:
             reklams = await Advertisement.filter(is_paid=True).all()
         if not reklams:
-            await callback.message.answer(text='Новых реклам нет')
+            await callback.message.answer(text=_('THERE_IS_NO_REKLAMS'))
             return
 
         await dialog_manager.switch_to(BlogerStateGroup.reklams_list)
