@@ -68,6 +68,7 @@ class Advertisement(Model):
     is_approved_by_bloger = fields.BooleanField(default=False)
     is_rejected = fields.BooleanField(default=False)
     is_paid = fields.BooleanField(default=False)
+    is_done = fields.BooleanField(default=False)
 
     agency = fields.ForeignKeyField('models.User', to_field='id', related_name='agencies', null=True)
     manager = fields.ForeignKeyField('models.User', to_field='id', related_name='managers', null=True)

@@ -25,8 +25,10 @@ class UserAdmin(CustomImportExport):
 
 @admin.register(Advertisement)
 class AdvertisementAdmin(CustomImportExport):
-    list_display = [field.name for field in Advertisement._meta.fields if field.name not in ['photo_file_id', 'video_file_id', 'document_file_id']]
-    list_editable = ('is_approved_by_bloger', 'is_paid', 'is_rejected', 'agency', 'manager', 'bloger', 'buyer')
+    list_display = [field.name for field in Advertisement._meta.fields if field.name not in
+                    ['photo_file_id', 'video_file_id', 'document_file_id']]
+    list_editable = ('is_approved_by_bloger', 'is_paid', 'is_rejected', 'is_rejected',
+                     'agency', 'manager', 'bloger', 'buyer')
 
 
 @admin.register(Dispatcher)

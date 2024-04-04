@@ -1,4 +1,5 @@
 from aiogram import F
+from aiogram.types import ContentType
 from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.text import Const, Format
 from aiogram_dialog.widgets.media import DynamicMedia
@@ -61,12 +62,43 @@ bloger_dialog = Dialog(
                 on_click=BlogerCallbackHandler.approve_or_reject_reklam,
                 when=F.get('dialog_data').get('is_paid') != True,
             ),
-            # TODO: ADD BUTTONS FOR IS_PAID REKLAMS
+
+            # buttons for paid_reklams
+            Button(
+                Const(text=_('START_TZ_BUTTON')),
+                id='start_reklam',
+                on_click=BlogerCallbackHandler.reschedule_or_start_reklam,
+                when=F.get('dialog_data').get('is_paid') == True,
+            ),
+            Button(
+                Const(text=_('RESCHEDULE_BUTTON')),
+                id='reschedule_reklam',
+                on_click=BlogerCallbackHandler.reschedule_or_start_reklam,
+                when=F.get('dialog_data').get('is_paid') == True,
+            ),
 
             SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_menu', state=BlogerStateGroup.menu),
         ),
 
         getter=get_reklams_by_status,
         state=BlogerStateGroup.reklams_list,
+    ),
+
+    # paid reklam menu
+    Window(
+        Const(text=_('SEND_CONTENT')),
+        SwitchTo(Const(text=_('SEND_CONTENT_BUTTON')), id='send_content', state=BlogerStateGroup.send_content),
+        state=BlogerStateGroup.paid_reklam_menu,
+    ),
+
+    # task input
+    Window(
+        Const(text=_('SEND_CONTENT_TO_BUYER')),
+        MessageInput(
+            func=BlogerCallbackHandler.entered_content,
+            content_types=[ContentType.TEXT, ContentType.PHOTO, ContentType.VIDEO, ContentType.DOCUMENT]
+        ),
+        SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_paid_menu', state=BlogerStateGroup.paid_reklam_menu),
+        state=BlogerStateGroup.send_content
     ),
 )

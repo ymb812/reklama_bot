@@ -47,9 +47,10 @@ class Advertisement(models.Model):
     video_file_id = models.CharField(max_length=256, blank=True, null=True)
     document_file_id = models.CharField(max_length=256, blank=True, null=True)
 
-    is_approved_by_bloger = models.BooleanField(default=False, blank=True)
-    is_rejected = models.BooleanField(default=False, blank=True)
-    is_paid = models.BooleanField(default=False, blank=True)
+    is_approved_by_bloger = models.BooleanField(default=False, blank=True, verbose_name='Согласованно с блогером')
+    is_rejected = models.BooleanField(default=False, blank=True, verbose_name='Отклонено блогером')
+    is_paid = models.BooleanField(default=False, blank=True, verbose_name='Оплачено')
+    is_done = models.BooleanField(default=False, blank=True, verbose_name='Одобрено заказчиком')
 
     agency = models.ForeignKey('User', on_delete=models.CASCADE, related_name='agencies', null=True, blank=True)
     manager = models.ForeignKey('User', on_delete=models.CASCADE, related_name='managers', null=True, blank=True)
