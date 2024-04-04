@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 router = Router(name='Start router')
 
 
-@router.message(Command(commands=['start']), StateFilter(None))
+@router.message(Command(commands=['start']))
 async def start_handler(
         message: types.Message, bot: Bot, state: FSMContext, command: CommandObject, dialog_manager: DialogManager
 ):
