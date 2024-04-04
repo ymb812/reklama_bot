@@ -16,10 +16,17 @@ agency_dialog = Dialog(
     # menu
     Window(
         Const(text=_('PICK_ACTION')),
-        Button(Const(text=_('ADD_BLOGER_BUTTON')), id='add_bloger', on_click=AgencyManagerCallbackHandler.add_user),
-        Button(Const(text=_('ADD_MANAGER_BUTTON')), id='add_manager', on_click=AgencyManagerCallbackHandler.add_user),
-        Button(Const(text=_('BLOGERS_LIST_BUTTON')), id='blogers_list', on_click=AgencyManagerCallbackHandler.list_of_users),
-        Button(Const(text=_('MANAGERS_LIST_BUTTON')), id='managers_list', on_click=AgencyManagerCallbackHandler.list_of_users),
+        Button(Const(text=_('ADD_BLOGER_BUTTON')), id='add_bloger',
+               on_click=AgencyManagerCallbackHandler.add_user),
+        Button(Const(text=_('ADD_MANAGER_BUTTON')), id='add_manager',
+               on_click=AgencyManagerCallbackHandler.add_user),
+        Button(Const(text=_('BLOGERS_LIST_BUTTON')), id='blogers_list',
+               on_click=AgencyManagerCallbackHandler.list_of_users),
+        Button(Const(text=_('MANAGERS_LIST_BUTTON')), id='managers_list',
+               on_click=AgencyManagerCallbackHandler.list_of_users),
+        Button(Const(text=_('REKLAMS_LIST_BUTTON')), id='agency_reklams_list',
+               on_click=AgencyManagerCallbackHandler.list_of_reklams_for_agency),
+
         state=AgencyStateGroup.menu,
     ),
 
@@ -58,7 +65,12 @@ agency_dialog = Dialog(
 
     # user menu
     Window(
-        Format(text=('Здесь какие-то кнопки для взаимодействия с пользователем {user.username}')),
+        Format(text=_('PICK_ACTION')),
+        Button(
+            Const(text=_('REKLAMS_LIST_BUTTON')),
+            id='agency_manager_reklams',
+            on_click=AgencyManagerCallbackHandler.list_of_reklams_for_agency
+        ),
         #Button(Const(text=_('DELETE')), id='delete_user', on_click=AgencyManagerCallbackHandler.add_user),
         SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_list', state=AgencyStateGroup.users_list),
         getter=get_user,

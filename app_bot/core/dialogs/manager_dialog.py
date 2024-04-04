@@ -131,9 +131,8 @@ manager_dialog = Dialog(
                 on_click=AgencyManagerCallbackHandler.add_buyer,
                 when=F['is_paid'] == False,
             ),
-
-            SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_menu', state=ManagerStateGroup.menu),
         ),
+        specific_back_buttons,
 
         getter=get_reklams_by_status,
         state=ManagerStateGroup.reklams_list,

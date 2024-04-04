@@ -5,4 +5,5 @@ class BlogerStateGroup(StatesGroup):
     menu = State()
     stats = State()
     reklams_list = State()
-    reklam_menu = State()
+    paid_reklam_menu = State()
+    send_content = State()
