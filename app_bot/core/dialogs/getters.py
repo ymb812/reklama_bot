@@ -95,6 +95,7 @@ async def get_reklams_by_status(dialog_manager: DialogManager, **kwargs) -> dict
     data_for_manager = None                                                    # TODO: AFTER 'or' IS TMP FOR BUYER
     if get_dialog_data(dialog_manager=dialog_manager, key='data_for_manager') or get_dialog_data(dialog_manager=dialog_manager, key='data_for_buyer'):
         data_for_manager = {
+            'id': current_reklam.id,
             'description': current_reklam.text,
             'is_approved_by_bloger': current_reklam.is_approved_by_bloger,
             'is_paid': current_reklam.is_paid,
@@ -102,7 +103,8 @@ async def get_reklams_by_status(dialog_manager: DialogManager, **kwargs) -> dict
             'bloger_inst_username': (await current_reklam.bloger).inst_username if (await current_reklam.bloger) else None,
             'buyer_tg_username': (await current_reklam.buyer).username if (await current_reklam.buyer) else None,
         }
-        data_for_manager = f'{data_for_manager["description"]}\n\n' \
+        data_for_manager = f'<b>ID</b>: {data_for_manager["id"]}\n' \
+                           f'{data_for_manager["description"]}\n\n' \
                            f'{"Согласовано с блогером" if data_for_manager["is_approved_by_bloger"] else "Не согласовано с блогером"}\n' \
                            f'{"Оплачено" if data_for_manager["is_paid"] else "Не оплачено"}\n\n' \
                            f'ТГ блогера: {data_for_manager["bloger_tg_username"]}\n' \
@@ -113,6 +115,7 @@ async def get_reklams_by_status(dialog_manager: DialogManager, **kwargs) -> dict
         'pages': len(reklams),
         'current_page': current_page + 1,
         'media_content': media_content,
+        'id': current_reklam.id,
         'description':  current_reklam.text,
         'data_for_manager': data_for_manager,
         'is_paid': current_reklam.is_paid,

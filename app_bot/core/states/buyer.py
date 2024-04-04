@@ -6,3 +6,4 @@ class BuyerStateGroup(StatesGroup):
     reklams_list = State()
     reklam_menu = State()
     stats = State()
+    handle_reklam_from_bloger = State()

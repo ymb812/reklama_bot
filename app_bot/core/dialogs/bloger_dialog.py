@@ -35,7 +35,7 @@ bloger_dialog = Dialog(
     # reklams
     Window(
         DynamicMedia(selector='media_content'),
-        Format(text='{description}'),
+        Format(text='<b>ID:</b> {id}\n\n{description}'),
         StubScroll(id='reklam_scroll', pages='pages'),
 
         # cycle pager
