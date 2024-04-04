@@ -6,7 +6,8 @@ from settings import settings
 
 def mailing_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    kb.button(text=_('MAILING_BUTTON'), callback_data='start_mailing')
+    kb.button(text=_('MANAGER_MAILING_BUTTON'), callback_data='start_manager_mailing')
+    kb.button(text=_('BLOGER_MAILING_BUTTON'), callback_data='start_bloger_mailing')
     kb.adjust(1)
     return kb.as_markup(resize_keyboard=True)
 
