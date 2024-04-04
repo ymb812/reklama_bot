@@ -20,9 +20,9 @@ def payment_kb(agency_url: str, manager_url: str) -> InlineKeyboardMarkup:
     return kb.as_markup(resize_keyboard=True)
 
 
-def handle_new_task_kb(adv_id: str) -> InlineKeyboardMarkup:
+def handle_paid_reklam_kb(adv_id: str) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    kb.button(text=_('CONFIRM_BUTTON'), callback_data=f'confirm_{adv_id}')  # handle
-    kb.button(text=_('REJECT_BUTTON'), callback_data=f'reject_{adv_id}')  # do nothing
+    kb.button(text=_('APPROVE_BUTTON'), callback_data=f'confirm_{adv_id}')
+    kb.button(text=_('REQUEST_CHANGES_BUTTON'), callback_data=f'reject_{adv_id}')
     kb.adjust(1)
     return kb.as_markup(resize_keyboard=True)

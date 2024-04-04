@@ -1,6 +1,6 @@
 import string
 import random
-from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
+from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import ManagedTextInput, MessageInput
 from aiogram_dialog.widgets.kbd import Button, Select
@@ -11,6 +11,7 @@ from core.states.manager import ManagerStateGroup
 from core.states.buyer import BuyerStateGroup
 from core.states.bloger import BlogerStateGroup
 from core.database.models import User, Advertisement, StatusType
+from core.keyboards.inline import handle_paid_reklam_kb
 from core.utils.texts import _
 from settings import settings
 
@@ -29,6 +30,15 @@ async def switch_page(dialog_manager: DialogManager, scroll_id: str):
     else:
         next_page = current_page + 1
     await scroll.set_page(next_page)
+
+
+def get_username_or_link(user: User):
+    if user.username:
+        user_username = f'@{user.username}'
+    else:
+        user_username = f'<a href="tg://user?id={user.user_id}">ссылка</a>'
+
+    return user_username
 
 
 class AgencyManagerCallbackHandler:
@@ -339,3 +349,59 @@ class BlogerCallbackHandler:
         # last page
         if dialog_manager.dialog_data['pages'] == 1:
             await dialog_manager.switch_to(BlogerStateGroup.menu)
+
+
+    @staticmethod
+    async def reschedule_or_start_reklam(
+            callback: CallbackQuery,
+            widget: Button | Select,
+            dialog_manager: DialogManager,
+    ):
+        adv = await Advertisement.get_or_none(id=dialog_manager.dialog_data['current_reklam_id'])
+        buyer_user_id = (await adv.buyer).user_id
+        dialog_manager.dialog_data['buyer_user_id'] = buyer_user_id
+
+        bloger: User = await adv.bloger
+        bloger_username = get_username_or_link(user=bloger)
+        manager: User = await adv.manager
+        manager_username = get_username_or_link(user=manager)
+
+        # send info to buyer
+        if widget.widget_id == 'start_reklam':
+            if buyer_user_id:
+                await dialog_manager.event.bot.send_message(
+                    chat_id=buyer_user_id,
+                    text=_('BUYER_NOTIFICATION', username=bloger_username)
+                )
+                await callback.message.answer(text=_('BUYER_NOTIFICATION_IS_SENT', manager_username=manager_username))
+
+            # buyer has no user_id
+            else:
+                await callback.message.answer(text=_('BUYER_NOTIFICATION_ERROR'))
+                return
+
+            # going to get TZ
+            await dialog_manager.switch_to(BlogerStateGroup.paid_reklam_menu)
+
+
+        # send manager contact and return
+        elif widget.widget_id == 'reschedule_reklam':
+            await callback.message.answer(text=_('MANAGER_SUPPORT', username=manager_username))
+            return
+
+
+    @staticmethod
+    async def entered_content(
+            message: Message,
+            widget: MessageInput,
+            dialog_manager: DialogManager,
+    ):
+        # send content to the buyer
+        await message.forward(chat_id=dialog_manager.dialog_data['buyer_user_id'])
+        await dialog_manager.event.bot.send_message(
+            chat_id=dialog_manager.dialog_data['buyer_user_id'],
+            text=_('PICK_ACTION'),
+            reply_markup=handle_paid_reklam_kb(adv_id=dialog_manager.dialog_data['current_reklam_id']),
+        )
+
+        await dialog_manager.switch_to(BlogerStateGroup.reklams_list)
