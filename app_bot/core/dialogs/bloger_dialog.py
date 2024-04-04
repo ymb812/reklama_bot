@@ -6,8 +6,7 @@ from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.kbd import PrevPage, NextPage, CurrentPage, Start, Column, StubScroll, Button, Row, \
     FirstPage, LastPage, SwitchTo
 from aiogram_dialog.widgets.input import TextInput, MessageInput
-from core.dialogs.getters import get_input_data, get_users, get_user, get_reklams_by_status
-from core.dialogs.custom_content import CustomPager
+from core.dialogs.getters import get_user_stats, get_reklams_by_status
 from core.dialogs.callbacks import BlogerCallbackHandler, AgencyManagerCallbackHandler
 from core.states.bloger import BlogerStateGroup
 from core.utils.texts import _
@@ -26,19 +25,19 @@ bloger_dialog = Dialog(
 
     # stats
     Window(
-        Const(text=_('PICK_ACTION')),
+        DynamicMedia(selector='media_content'),
         SwitchTo(Const(text=_('UPDATE_STATS_BUTTON')), id='update_stats', state=BlogerStateGroup.stats_update),
         SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_menu', state=BlogerStateGroup.menu),
+        getter=get_user_stats,
         state=BlogerStateGroup.stats,
     ),
 
-    # stats link input
+    # stats input
     Window(
-        Const(text=_('Введите ссылку на статистику')),
-        TextInput(
-            id='input_stats',
-            type_factory=str,
-            on_success=BlogerCallbackHandler.entered_stats
+        Const(text=_('Загрузите видео с демонстрацией статистики')),
+        MessageInput(
+            func=BlogerCallbackHandler.entered_stats,
+            content_types=[ContentType.VIDEO, ContentType.DOCUMENT]
         ),
         SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_menu', state=BlogerStateGroup.menu),
         state=BlogerStateGroup.stats_update,

@@ -234,11 +234,15 @@ class AgencyManagerCallbackHandler:
             dialog_manager: DialogManager,
             item_id: str | None = None,
     ):
-        stats = await UserStats.get_or_none(user_id=get_dialog_data(dialog_manager=dialog_manager, key='user_id'))
-        if not stats or not stats.full_stats_link:
+        user_stats = await UserStats.get_or_none(user_id=get_dialog_data(dialog_manager=dialog_manager, key='user_id'))
+        if not user_stats or not user_stats.video_file_id and not user_stats.document_file_id:
             await callback.message.answer(text='Блогер не загрузил статистику')
         else:
-            await callback.message.answer(text=f'{stats.full_stats_link}')
+            # send video or document
+            if user_stats.video_file_id:
+                await callback.message.answer_video(video=user_stats.video_file_id)
+            elif user_stats.document_file_id:
+                await callback.message.answer_document(document=user_stats.document_file_id)
 
         await dialog_manager.switch_to(ManagerStateGroup.user_menu)
 
@@ -361,8 +365,6 @@ class BlogerCallbackHandler:
             # change adv status and send msg to manager
             adv.is_approved_by_bloger = True
 
-            await callback.message.answer(text='Далее как-то происходит согласование')
-
         elif widget.widget_id == 'reject_reklam':
             adv.is_rejected = True
 
@@ -433,11 +435,25 @@ class BlogerCallbackHandler:
     @staticmethod
     async def entered_stats(
             message: Message,
-            widget: ManagedTextInput,
+            widget: MessageInput,
             dialog_manager: DialogManager,
-            value: str,
     ):
+        # handle file input
+        video_file_id, document_file_id = None, None
+        if message.video:
+            video_file_id = message.video.file_id
+        elif message.document:
+            document_file_id = message.document.file_id
+
+        # save video or document
         bloger = await User.get_or_none(user_id=message.from_user.id)
-        await UserStats.create(user=bloger, full_stats_link=value)
+        user_stats = await UserStats.get_or_none(user=bloger)
+        if not user_stats:
+            await UserStats.create(user=bloger, video_file_id=video_file_id, document_file_id=document_file_id)
+        else:
+            user_stats.video_file_id = video_file_id
+            user_stats.document_file_id = document_file_id
+            await user_stats.save()
+
         await message.answer('Статистика успешно сохранена')
         await dialog_manager.switch_to(BlogerStateGroup.stats)

@@ -2,7 +2,7 @@ from aiogram.types import ContentType
 from aiogram_dialog import DialogManager
 from aiogram_dialog.api.entities import MediaAttachment
 from tortoise.expressions import Q
-from core.database.models import User, Advertisement
+from core.database.models import User, Advertisement, UserStats
 from core.dialogs.custom_content import get_dialog_data
 
 
@@ -119,4 +119,24 @@ async def get_reklams_by_status(dialog_manager: DialogManager, **kwargs) -> dict
         'description':  current_reklam.text,
         'data_for_manager': data_for_manager,
         'is_paid': current_reklam.is_paid,
+    }
+
+
+async def get_user_stats(dialog_manager: DialogManager, **kwargs):
+    # handle manager or bloger request
+    user_id = get_dialog_data(dialog_manager=dialog_manager, key='user_id')  # from manager
+    if user_id:
+        user_stats = await UserStats.get_or_none(user_id=user_id)
+    else:
+        user_stats = await UserStats.get_or_none(user__user_id=dialog_manager.event.from_user.id)   # from bloger
+
+
+    media_content = None
+    if user_stats.document_file_id:
+        media_content = MediaAttachment(ContentType.DOCUMENT, url=user_stats.document_file_id)
+    elif user_stats.video_file_id:
+        media_content = MediaAttachment(ContentType.VIDEO, url=user_stats.video_file_id)
+
+    return {
+        'media_content': media_content
     }

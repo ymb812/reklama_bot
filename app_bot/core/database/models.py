@@ -85,9 +85,8 @@ class UserStats(Model):
 
     id = fields.BigIntField(pk=True)
     user = fields.ForeignKeyField('models.User', to_field='id', related_name='user_stats', null=True)
-    full_stats_link = fields.CharField(max_length=64, unique=True, null=True)
-    reklam_stats_link = fields.CharField(max_length=64, unique=True, null=True)
-    reklam = fields.ForeignKeyField('models.Advertisement', to_field='id', related_name='reklam_stats', null=True)
+    video_file_id = fields.CharField(max_length=256, null=True)
+    document_file_id = fields.CharField(max_length=256, null=True)
 
 
 class Dispatcher(Model):
