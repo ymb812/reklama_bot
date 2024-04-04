@@ -26,10 +26,22 @@ bloger_dialog = Dialog(
 
     # stats
     Window(
-        Const(text=_('Какие-то действия со статистикой')),
-        Button(Const(text=_('UPDATE_STATS_BUTTON')), id='update_stats'),
+        Const(text=_('PICK_ACTION')),
+        SwitchTo(Const(text=_('UPDATE_STATS_BUTTON')), id='update_stats', state=BlogerStateGroup.stats_update),
         SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_menu', state=BlogerStateGroup.menu),
         state=BlogerStateGroup.stats,
+    ),
+
+    # stats link input
+    Window(
+        Const(text=_('Введите ссылку на статистику')),
+        TextInput(
+            id='input_stats',
+            type_factory=str,
+            on_success=BlogerCallbackHandler.entered_stats
+        ),
+        SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_menu', state=BlogerStateGroup.menu),
+        state=BlogerStateGroup.stats_update,
     ),
 
     # reklams

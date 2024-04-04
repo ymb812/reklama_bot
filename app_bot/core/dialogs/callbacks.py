@@ -10,7 +10,7 @@ from core.states.agency import AgencyStateGroup
 from core.states.manager import ManagerStateGroup
 from core.states.buyer import BuyerStateGroup
 from core.states.bloger import BlogerStateGroup
-from core.database.models import User, Advertisement, StatusType
+from core.database.models import User, Advertisement, StatusType, UserStats
 from core.keyboards.inline import handle_paid_reklam_kb
 from core.utils.texts import _
 from settings import settings
@@ -203,7 +203,26 @@ class AgencyManagerCallbackHandler:
             dialog_manager: DialogManager,
             item_id: str | None = None,
     ):
-        await callback.message.answer('Здесь будет запрос статистики у блогера')
+        # send request to the bloger
+        manager = await User.get(user_id=callback.from_user.id)
+        manager_username = get_username_or_link(user=manager)
+
+        bloger_id = get_dialog_data(dialog_manager=dialog_manager, key='user_id')
+        bloger = await User.get(id=bloger_id)
+        bloger_username = get_username_or_link(user=bloger)
+
+        if bloger.user_id:
+            await dialog_manager.event.bot.send_message(
+                chat_id=bloger.user_id,
+                text=_('STATS_REQUEST', manager_username=manager_username)
+            )
+            await callback.message.answer(text=_('STATS_REQUEST_IS_SENT', bloger_username=bloger_username))
+
+        # buyer has no user_id
+        else:
+            await callback.message.answer(text=_('USER_NOTIFICATION_ERROR'))
+            return
+
 
         await dialog_manager.switch_to(ManagerStateGroup.user_menu)
 
@@ -215,7 +234,11 @@ class AgencyManagerCallbackHandler:
             dialog_manager: DialogManager,
             item_id: str | None = None,
     ):
-        await callback.message.answer('Здесь будет просмотр статистики')
+        stats = await UserStats.get_or_none(user_id=get_dialog_data(dialog_manager=dialog_manager, key='user_id'))
+        if not stats or not stats.full_stats_link:
+            await callback.message.answer(text='Блогер не загрузил статистику')
+        else:
+            await callback.message.answer(text=f'{stats.full_stats_link}')
 
         await dialog_manager.switch_to(ManagerStateGroup.user_menu)
 
@@ -377,7 +400,7 @@ class BlogerCallbackHandler:
 
             # buyer has no user_id
             else:
-                await callback.message.answer(text=_('BUYER_NOTIFICATION_ERROR'))
+                await callback.message.answer(text=_('USER_NOTIFICATION_ERROR'))
                 return
 
             # going to get TZ
@@ -405,3 +428,16 @@ class BlogerCallbackHandler:
         )
 
         await dialog_manager.switch_to(BlogerStateGroup.reklams_list)
+
+
+    @staticmethod
+    async def entered_stats(
+            message: Message,
+            widget: ManagedTextInput,
+            dialog_manager: DialogManager,
+            value: str,
+    ):
+        bloger = await User.get_or_none(user_id=message.from_user.id)
+        await UserStats.create(user=bloger, full_stats_link=value)
+        await message.answer('Статистика успешно сохранена')
+        await dialog_manager.switch_to(BlogerStateGroup.stats)
