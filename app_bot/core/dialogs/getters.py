@@ -1,6 +1,7 @@
 from aiogram.types import ContentType
 from aiogram_dialog import DialogManager
 from aiogram_dialog.api.entities import MediaAttachment
+from tortoise.expressions import Q
 from core.database.models import User, Advertisement
 from core.dialogs.custom_content import get_dialog_data
 
@@ -11,8 +12,12 @@ async def get_input_data(dialog_manager: DialogManager, **kwargs):
 
 
 async def get_users(dialog_manager: DialogManager, **kwargs):
+    agency_or_manager = await User.get(user_id=dialog_manager.event.from_user.id)
+
     status = get_dialog_data(dialog_manager=dialog_manager, key='type')
-    users = await User.filter(status=status).all()
+    users = await User.filter(
+        Q(status=status) & ((Q(agency_id=agency_or_manager.id) | Q(manager_id=agency_or_manager.id)))
+    ).all()
 
     return {
         'users': users
@@ -56,10 +61,15 @@ async def get_reklams_by_status(dialog_manager: DialogManager, **kwargs) -> dict
 
     # reklams for bloger
     else:
-        if not dialog_manager.dialog_data.get('is_paid'):
-            reklams = await Advertisement.filter(is_approved_by_bloger=False).all()
+        if dialog_manager.dialog_data.get('is_paid'):
+            reklams = await Advertisement.filter(
+                bloger__user_id=dialog_manager.event.from_user.id, is_paid=True,
+            ).all()
+
         else:
-            reklams = await Advertisement.filter(is_paid=True).all()
+            reklams = await Advertisement.filter(
+                bloger__user_id=dialog_manager.event.from_user.id, is_approved_by_bloger=False, is_rejected=False,
+            ).all()
 
     if not reklams:
         raise ValueError

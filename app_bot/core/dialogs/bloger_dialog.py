@@ -17,16 +17,16 @@ bloger_dialog = Dialog(
     # menu
     Window(
         Const(text=_('PICK_ACTION')),
-        SwitchTo(Const(text=_('MY_STATS')), id='get_stats', state=BlogerStateGroup.stats),
-        Button(Const(text=_('REKLAMS_APPROVE')), id='reklams_approve', on_click=BlogerCallbackHandler.reklams_list),
-        Button(Const(text=_('PAID_REKLAMS')), id='paid_reklams', on_click=BlogerCallbackHandler.reklams_list),
+        SwitchTo(Const(text=_('STATS_BUTTON')), id='get_stats', state=BlogerStateGroup.stats),
+        Button(Const(text=_('REKLAMS_APPROVE_BUTTON')), id='reklams_approve', on_click=BlogerCallbackHandler.reklams_list),
+        Button(Const(text=_('PAID_REKLAMS_BUTTON')), id='paid_reklams', on_click=BlogerCallbackHandler.reklams_list),
         state=BlogerStateGroup.menu,
     ),
 
     # stats
     Window(
         Const(text=_('Какие-то действия со статистикой')),
-        Button(Const(text=_('UPDATE_STATS')), id='update_stats'),
+        Button(Const(text=_('UPDATE_STATS_BUTTON')), id='update_stats'),
         SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_menu', state=BlogerStateGroup.menu),
         state=BlogerStateGroup.stats,
     ),

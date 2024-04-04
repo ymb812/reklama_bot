@@ -75,6 +75,7 @@ class AgencyManagerCallbackHandler:
 
         elif 'managers_list' in callback.data:
             dialog_manager.dialog_data['type'] = 'manager'
+            dialog_manager.dialog_data['is_agency'] = True
             await dialog_manager.switch_to(AgencyStateGroup.users_list)
 
 
@@ -103,12 +104,18 @@ class AgencyManagerCallbackHandler:
             return
 
         # add new user and send link
+        agency_id = None
+        manager = await User.get(user_id=message.from_user.id)
+        if manager.status == StatusType.agency:  # check is manager agency
+            agency_id = manager.id
+
         user = await User.create(
             username=tg_username,
             inst_username=inst_username,
             link=link,
             status=status,
-            manager_id=(await User.get(user_id=message.from_user.id)).id
+            agency_id=agency_id,
+            manager_id=manager.id
         )
 
         await message.answer(
@@ -174,6 +181,7 @@ class AgencyManagerCallbackHandler:
             manager_id=manager.id,
             bloger_id=bloger_id
         )
+        await message.answer(text=_('TZ_IS_SENT'))
 
         await dialog_manager.switch_to(ManagerStateGroup.user_menu)
 
@@ -210,6 +218,12 @@ class AgencyManagerCallbackHandler:
             item_id: str | None = None,
     ):
         dialog_manager.dialog_data['data_for_manager'] = True
+
+        reklams = await Advertisement.filter(manager__user_id=dialog_manager.event.from_user.id).all()
+        if not reklams:
+            await callback.message.answer(text=_('THERE_IS_NO_REKLAMS'))
+            return
+
         await dialog_manager.switch_to(ManagerStateGroup.reklams_list)
 
 
@@ -287,10 +301,15 @@ class BlogerCallbackHandler:
             dialog_manager.dialog_data['is_paid'] = True
 
         # check is there any reklams
-        if not dialog_manager.dialog_data.get('is_paid'):
-            reklams = await Advertisement.filter(is_approved_by_bloger=False).all()
+        if dialog_manager.dialog_data.get('is_paid'):
+            reklams = await Advertisement.filter(
+                bloger__user_id=dialog_manager.event.from_user.id, is_paid=True,
+            ).all()
         else:
-            reklams = await Advertisement.filter(is_paid=True).all()
+            reklams = await Advertisement.filter(
+                bloger__user_id=dialog_manager.event.from_user.id, is_approved_by_bloger=False, is_rejected=False,
+            ).all()
+
         if not reklams:
             await callback.message.answer(text=_('THERE_IS_NO_REKLAMS'))
             return
@@ -312,7 +331,7 @@ class BlogerCallbackHandler:
             await callback.message.answer(text='Далее как-то происходит согласование')
 
         elif widget.widget_id == 'reject_reklam':
-            pass
+            adv.is_rejected = True
 
         await switch_page(dialog_manager=dialog_manager, scroll_id='reklam_scroll')
         await adv.save()

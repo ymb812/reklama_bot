@@ -66,23 +66,23 @@ msgstr "Поддержка"
 
 
 msgid "ADD_BLOGER_BUTTON"
-msgstr "Добавить блогера"
+msgstr "🆕 Добавить блогера"
 
 
 msgid "ADD_MANAGER_BUTTON"
-msgstr "Добавить менеджера"
+msgstr "🆕 Добавить менеджера"
 
 
 msgid "BLOGERS_LIST_BUTTON"
-msgstr "Список блогеров"
+msgstr "📋 Список блогеров"
 
 
 msgid "MANAGERS_LIST_BUTTON"
-msgstr "Список менеджеров"
+msgstr "📋 Список менеджеров"
 
 
 msgid "REKLAMS_LIST_BUTTON"
-msgstr "Список реклам"
+msgstr "🪧 Список реклам"
 
 
 msgid "SEND_TASK_BUTTON"
@@ -101,8 +101,28 @@ msgid "ASK_STATS_BUTTON"
 msgstr "Запросить статистику"
 
 
+msgid "UPDATE_STATS_BUTTON"
+msgstr "Обновить статистику"
+
+
 msgid "ADD_BUYER_BUTTON"
 msgstr "Добавить закупщика"
+
+
+msgid "REKLAMS_APPROVE_BUTTON"
+msgstr "Рекламы на согласование"
+
+
+msgid "PAID_REKLAMS_BUTTON"
+msgstr "Оплаченные рекламы"
+
+
+msgid "APPROVE_BUTTON"
+msgstr "Принять"
+
+
+msgid "REJECT_BUTTON"
+msgstr "Отказаться"
 
 
 # texts
@@ -164,6 +184,14 @@ msgstr "Введите ТЗ (фото/видео/файл/текст)"
 
 msgid "THERE_IS_NO_REKLAMS"
 msgstr "Реклам нет"
+
+
+msgid "WRONG_USERNAME_INPUT"
+msgstr "Неверный ввод"
+
+
+msgid "TZ_IS_SENT"
+msgstr "ТЗ успешно отправлено!"
 
 
 # format

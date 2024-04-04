@@ -11,7 +11,7 @@ class StatusType(models.TextChoices):
 class User(models.Model):
     class Meta:
         db_table = 'users'
-        ordering = ['created_at']
+        ordering = ['id']
         verbose_name = 'Пользователи'
         verbose_name_plural = verbose_name
 
@@ -48,6 +48,7 @@ class Advertisement(models.Model):
     document_file_id = models.CharField(max_length=256, blank=True, null=True)
 
     is_approved_by_bloger = models.BooleanField(default=False, blank=True)
+    is_rejected = models.BooleanField(default=False, blank=True)
     is_paid = models.BooleanField(default=False, blank=True)
 
     agency = models.ForeignKey('User', on_delete=models.CASCADE, related_name='agencies', null=True, blank=True)

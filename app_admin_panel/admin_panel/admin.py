@@ -18,15 +18,15 @@ class UserResource(ModelResource):
 @admin.register(User)
 class UserAdmin(CustomImportExport):
     resource_classes = [UserResource]
-    list_display = ('user_id', 'username', 'inst_username', 'status', 'is_banned', 'link', 'created_at')
+    list_display = ('id', 'user_id', 'username', 'inst_username', 'status', 'is_banned', 'link', 'created_at')
     list_display_links = ('user_id', )
     list_editable = ('status', 'username', 'is_banned')
 
 
 @admin.register(Advertisement)
 class AdvertisementAdmin(CustomImportExport):
-    list_display = [field.name for field in Advertisement._meta.fields]
-    list_editable = ('is_approved_by_bloger', 'is_paid', 'agency', 'manager', 'bloger', 'buyer')
+    list_display = [field.name for field in Advertisement._meta.fields if field.name not in ['photo_file_id', 'video_file_id', 'document_file_id']]
+    list_editable = ('is_approved_by_bloger', 'is_paid', 'is_rejected', 'agency', 'manager', 'bloger', 'buyer')
 
 
 @admin.register(Dispatcher)
