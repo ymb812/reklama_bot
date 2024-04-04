@@ -222,8 +222,8 @@ msgid "TZ_IS_SENT"
 msgstr "ТЗ успешно отправлено!"
 
 
-msgid "BUYER_NOTIFICATION_ERROR"
-msgstr "Заказчик еще не зарегистрировался в боте"
+msgid "USER_NOTIFICATION_ERROR"
+msgstr "Пользователь еще не зарегистрировался в боте"
 
 
 msgid "SEND_CONTENT"
@@ -298,3 +298,11 @@ msgstr "Закупщик запросил правки по рекламе с <b
 
 msgid "REKLAM_IS_DONE"
 msgstr "Закупщик принял рекламу с <b>ID</b> {reklam_id}"
+
+
+msgid "STATS_REQUEST"
+msgstr "Менеджер {manager_username} запрашивает у вас статистику"
+
+
+msgid "STATS_REQUEST_IS_SENT"
+msgstr "Запрос успешно отправлен  блогеру {bloger_username}"

@@ -78,6 +78,17 @@ class Advertisement(Model):
     created_at = fields.DatetimeField(auto_now_add=True)
 
 
+class UserStats(Model):
+    class Meta:
+        table = 'user_stats'
+        ordering = ['id']
+
+    id = fields.BigIntField(pk=True)
+    user = fields.ForeignKeyField('models.User', to_field='id', related_name='user_stats', null=True)
+    video_file_id = fields.CharField(max_length=256, null=True)
+    document_file_id = fields.CharField(max_length=256, null=True)
+
+
 class Dispatcher(Model):
     class Meta:
         table = 'mailings'

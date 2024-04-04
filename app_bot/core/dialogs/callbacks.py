@@ -10,7 +10,7 @@ from core.states.agency import AgencyStateGroup
 from core.states.manager import ManagerStateGroup
 from core.states.buyer import BuyerStateGroup
 from core.states.bloger import BlogerStateGroup
-from core.database.models import User, Advertisement, StatusType
+from core.database.models import User, Advertisement, StatusType, UserStats
 from core.keyboards.inline import handle_paid_reklam_kb
 from core.utils.texts import _
 from settings import settings
@@ -203,7 +203,26 @@ class AgencyManagerCallbackHandler:
             dialog_manager: DialogManager,
             item_id: str | None = None,
     ):
-        await callback.message.answer('Здесь будет запрос статистики у блогера')
+        # send request to the bloger
+        manager = await User.get(user_id=callback.from_user.id)
+        manager_username = get_username_or_link(user=manager)
+
+        bloger_id = get_dialog_data(dialog_manager=dialog_manager, key='user_id')
+        bloger = await User.get(id=bloger_id)
+        bloger_username = get_username_or_link(user=bloger)
+
+        if bloger.user_id:
+            await dialog_manager.event.bot.send_message(
+                chat_id=bloger.user_id,
+                text=_('STATS_REQUEST', manager_username=manager_username)
+            )
+            await callback.message.answer(text=_('STATS_REQUEST_IS_SENT', bloger_username=bloger_username))
+
+        # buyer has no user_id
+        else:
+            await callback.message.answer(text=_('USER_NOTIFICATION_ERROR'))
+            return
+
 
         await dialog_manager.switch_to(ManagerStateGroup.user_menu)
 
@@ -215,7 +234,15 @@ class AgencyManagerCallbackHandler:
             dialog_manager: DialogManager,
             item_id: str | None = None,
     ):
-        await callback.message.answer('Здесь будет просмотр статистики')
+        user_stats = await UserStats.get_or_none(user_id=get_dialog_data(dialog_manager=dialog_manager, key='user_id'))
+        if not user_stats or not user_stats.video_file_id and not user_stats.document_file_id:
+            await callback.message.answer(text='Блогер не загрузил статистику')
+        else:
+            # send video or document
+            if user_stats.video_file_id:
+                await callback.message.answer_video(video=user_stats.video_file_id)
+            elif user_stats.document_file_id:
+                await callback.message.answer_document(document=user_stats.document_file_id)
 
         await dialog_manager.switch_to(ManagerStateGroup.user_menu)
 
@@ -338,8 +365,6 @@ class BlogerCallbackHandler:
             # change adv status and send msg to manager
             adv.is_approved_by_bloger = True
 
-            await callback.message.answer(text='Далее как-то происходит согласование')
-
         elif widget.widget_id == 'reject_reklam':
             adv.is_rejected = True
 
@@ -377,7 +402,7 @@ class BlogerCallbackHandler:
 
             # buyer has no user_id
             else:
-                await callback.message.answer(text=_('BUYER_NOTIFICATION_ERROR'))
+                await callback.message.answer(text=_('USER_NOTIFICATION_ERROR'))
                 return
 
             # going to get TZ
@@ -405,3 +430,30 @@ class BlogerCallbackHandler:
         )
 
         await dialog_manager.switch_to(BlogerStateGroup.reklams_list)
+
+
+    @staticmethod
+    async def entered_stats(
+            message: Message,
+            widget: MessageInput,
+            dialog_manager: DialogManager,
+    ):
+        # handle file input
+        video_file_id, document_file_id = None, None
+        if message.video:
+            video_file_id = message.video.file_id
+        elif message.document:
+            document_file_id = message.document.file_id
+
+        # save video or document
+        bloger = await User.get_or_none(user_id=message.from_user.id)
+        user_stats = await UserStats.get_or_none(user=bloger)
+        if not user_stats:
+            await UserStats.create(user=bloger, video_file_id=video_file_id, document_file_id=document_file_id)
+        else:
+            user_stats.video_file_id = video_file_id
+            user_stats.document_file_id = document_file_id
+            await user_stats.save()
+
+        await message.answer('Статистика успешно сохранена')
+        await dialog_manager.switch_to(BlogerStateGroup.stats)
