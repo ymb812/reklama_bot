@@ -57,8 +57,12 @@ msgid "FORWARD_PAGER"
 msgstr "▶️"
 
 
-msgid "MAILING_BUTTON"
-msgstr "Запустить"
+msgid "MANAGER_MAILING_BUTTON"
+msgstr "Запустить по менеджерам"
+
+
+msgid "BLOGER_MAILING_BUTTON"
+msgstr "Запустить по блогерам"
 
 
 msgid "SUPPORT_BUTTON"
@@ -141,6 +145,14 @@ msgid "REQUEST_CHANGES_BUTTON"
 msgstr "Внести правки"
 
 
+msgid "AGENCY_PAY_BUTTON"
+msgstr "Купить доступ "Агентства""
+
+
+msgid "MANAGER_PAY_BUTTON"
+msgstr "Купить доступ "Менеджера""
+
+
 # texts
 msgid "CANCEL_MSG"
 msgstr "Никакие цепочки процессов не запущены. Отменять нечего."
@@ -161,7 +173,7 @@ msgstr "ℹ️ Укажите текст и/или фото рассылки"
 msgid "CONFIRM_MAILING"
 msgstr "Запустить рассылку всем пользователям?\n\n"
 
-"<i>/cancel для отмены</i>"
+"<i>/start для отмены</i>"
 
 
 msgid "NEW_ADMIN_TEXT"
@@ -230,6 +242,10 @@ msgid "SEND_CONTENT_TO_BUYER"
 msgstr "Загрузите рекламу - она будет отправлена заказчику"
 
 
+msgid "SEND_NOT_ALLOWED"
+msgstr "Данная функция доступна только агентству"
+
+
 # format
 msgid "NOT_FOLLOWED"
 msgstr "Для начала подпишитесь на канал Веры:\n"
@@ -237,14 +253,13 @@ msgstr "Для начала подпишитесь на канал Веры:\n"
 
 
 msgid "MAILING_HAS_BEEN_STARTED"
-msgstr "ℹ️ Рассылка запущена администратором @{admin_username}"
+msgstr "ℹ️ Рассылка запущена @{admin_username}"
 
 
 msgid "MAILING_IS_COMPLETED"
 msgstr "ℹ️ Рассылка завершена\n\n"
 
-"Отправлено: {sent_amount}\n"
-"Всего пользователей: {users_amount}"
+"Отправлено: {sent_amount}"
 
 
 msgid "CONFIRM_INPUT_DATA"

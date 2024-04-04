@@ -31,7 +31,7 @@ async def process_pre_checkout_query(pre_checkout_query: types.PreCheckoutQuery,
 
 
 @router.message(F.successful_payment)
-async def successful_payment(message: types.Message, state: FSMContext, dialog_manager: DialogManager):
+async def successful_payment(message: types.Message, bot: Bot, dialog_manager: DialogManager):
     status = message.successful_payment.invoice_payload
 
     # set status
@@ -44,6 +44,7 @@ async def successful_payment(message: types.Message, state: FSMContext, dialog_m
 
     # start dialog
     if status == 'agency':
+        await set_admin_commands(bot=bot, scope=types.BotCommandScopeChat(chat_id=message.from_user.id))
         await dialog_manager.start(state=AgencyStateGroup.menu, mode=StartMode.RESET_STACK)
     elif status == 'manager':
         await dialog_manager.start(state=ManagerStateGroup.menu, mode=StartMode.RESET_STACK)
