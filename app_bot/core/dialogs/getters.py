@@ -132,9 +132,9 @@ async def get_user_stats(dialog_manager: DialogManager, **kwargs):
 
 
     media_content = None
-    if user_stats.document_file_id:
+    if user_stats and user_stats.document_file_id:
         media_content = MediaAttachment(ContentType.DOCUMENT, url=user_stats.document_file_id)
-    elif user_stats.video_file_id:
+    elif user_stats and user_stats.video_file_id:
         media_content = MediaAttachment(ContentType.VIDEO, url=user_stats.video_file_id)
 
     return {

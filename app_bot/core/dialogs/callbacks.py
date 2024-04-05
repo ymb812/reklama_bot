@@ -1,5 +1,6 @@
 import string
 import random
+from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import ManagedTextInput, MessageInput
@@ -394,10 +395,15 @@ class BlogerCallbackHandler:
         # send info to buyer
         if widget.widget_id == 'start_reklam':
             if buyer_user_id:
-                await dialog_manager.event.bot.send_message(
-                    chat_id=buyer_user_id,
-                    text=_('BUYER_NOTIFICATION', username=bloger_username)
-                )
+                try:
+                    await dialog_manager.event.bot.send_message(
+                        chat_id=buyer_user_id,
+                        text=_('BUYER_NOTIFICATION', username=bloger_username)
+                    )
+                except:
+                    await callback.message.answer(text=_('USER_NOTIFICATION_ERROR'))
+                    return
+
                 await callback.message.answer(text=_('BUYER_NOTIFICATION_IS_SENT', manager_username=manager_username))
 
             # buyer has no user_id
