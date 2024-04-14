@@ -398,13 +398,13 @@ class BlogerCallbackHandler:
                 try:
                     await dialog_manager.event.bot.send_message(
                         chat_id=buyer_user_id,
-                        text=_('BUYER_NOTIFICATION', username=bloger_username)
+                        text=_('BUYER_NOTIFICATION', reklam_id=adv.id)
                     )
                 except:
                     await callback.message.answer(text=_('USER_NOTIFICATION_ERROR'))
                     return
 
-                await callback.message.answer(text=_('BUYER_NOTIFICATION_IS_SENT', manager_username=manager_username))
+                await callback.message.answer(text=_('BUYER_NOTIFICATION_IS_SENT'))
 
             # buyer has no user_id
             else:
@@ -428,10 +428,10 @@ class BlogerCallbackHandler:
             dialog_manager: DialogManager,
     ):
         # send content to the buyer
-        await message.forward(chat_id=dialog_manager.dialog_data['buyer_user_id'])
+        await message.copy_to(chat_id=dialog_manager.dialog_data['buyer_user_id'])
         await dialog_manager.event.bot.send_message(
             chat_id=dialog_manager.dialog_data['buyer_user_id'],
-            text=_('PICK_ACTION'),
+            text=_('PICK_ACTION_FOR_REKLAM', reklam_id=dialog_manager.dialog_data['current_reklam_id']),
             reply_markup=handle_paid_reklam_kb(adv_id=dialog_manager.dialog_data['current_reklam_id']),
         )
 

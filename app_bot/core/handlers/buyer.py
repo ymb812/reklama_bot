@@ -49,5 +49,5 @@ async def send_comment_to_bloger(message: types.Message, bot: Bot, state: FSMCon
             text=_('RESPONSE_FROM_BUYER', reklam_id=state_data['adv_id'])
         )
 
-    await message.forward(chat_id=state_data['bloger_user_id'])
+    await message.copy_to(chat_id=state_data['bloger_user_id'])
     await state.clear()
