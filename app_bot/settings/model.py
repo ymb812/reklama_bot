@@ -12,7 +12,6 @@ class BotSettings(BaseModel):
     welcome_post_id_2: int = fields.Field(alias='WELCOME_POST_ID_2')
     notification_post_id: int = fields.Field(alias='NOTIFICATION_POST_ID')
 
-
 class Dialogues(BaseModel):
     categories_per_page_height: int = fields.Field(alias='CATEGORIES_HEIGHT')
     categories_per_page_width: int = fields.Field(alias='CATEGORIES_WIDTH')

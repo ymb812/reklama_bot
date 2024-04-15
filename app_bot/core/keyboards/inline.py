@@ -27,3 +27,10 @@ def handle_paid_reklam_kb(adv_id: str) -> InlineKeyboardMarkup:
     kb.button(text=_('REQUEST_CHANGES_BUTTON'), callback_data=f'_buyer_reject_{adv_id}')
     kb.adjust(1)
     return kb.as_markup(resize_keyboard=True)
+
+
+def support_kb(adv_id: str) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text=_('ANSWER_BUTTON'), callback_data=f'answer_{adv_id}')
+    kb.adjust(1)
+    return kb.as_markup(resize_keyboard=True)

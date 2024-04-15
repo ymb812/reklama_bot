@@ -1,6 +1,5 @@
 import string
 import random
-from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import ManagedTextInput, MessageInput
@@ -12,7 +11,7 @@ from core.states.manager import ManagerStateGroup
 from core.states.buyer import BuyerStateGroup
 from core.states.bloger import BlogerStateGroup
 from core.database.models import User, Advertisement, StatusType, UserStats
-from core.keyboards.inline import handle_paid_reklam_kb
+from core.keyboards.inline import handle_paid_reklam_kb, support_kb
 from core.utils.texts import _
 from settings import settings
 
@@ -115,8 +114,8 @@ class AgencyManagerCallbackHandler:
             return
 
         # add new user and send link
-        agency_id = None
         manager = await User.get(user_id=message.from_user.id)
+        agency_id = manager.agency_id  # if manager has agency, add bloger to the agency
         if manager.status == StatusType.agency:  # check is manager agency
             agency_id = manager.id
 
@@ -129,9 +128,7 @@ class AgencyManagerCallbackHandler:
             manager_id=manager.id
         )
 
-        await message.answer(
-            text=_(f'Пользователь со статусом {status} добавлен')
-        )
+        await message.answer(text=_('USER_IS_ADDED', status=status))
         await message.answer(link)
 
         # handle new buyer
@@ -387,11 +384,6 @@ class BlogerCallbackHandler:
         buyer_user_id = (await adv.buyer).user_id
         dialog_manager.dialog_data['buyer_user_id'] = buyer_user_id
 
-        bloger: User = await adv.bloger
-        bloger_username = get_username_or_link(user=bloger)
-        manager: User = await adv.manager
-        manager_username = get_username_or_link(user=manager)
-
         # send info to buyer
         if widget.widget_id == 'start_reklam':
             if buyer_user_id:
@@ -415,9 +407,9 @@ class BlogerCallbackHandler:
             await dialog_manager.switch_to(BlogerStateGroup.paid_reklam_menu)
 
 
-        # send manager contact and return
+        # create topic (if not exists) with manager and agent (if exists)
         elif widget.widget_id == 'reschedule_reklam':
-            await callback.message.answer(text=_('MANAGER_SUPPORT', username=manager_username))
+            await dialog_manager.switch_to(BlogerStateGroup.ask_support)
             return
 
 
@@ -463,3 +455,24 @@ class BlogerCallbackHandler:
 
         await message.answer('Статистика успешно сохранена')
         await dialog_manager.switch_to(BlogerStateGroup.stats)
+
+
+    @staticmethod
+    async def entered_support_msg(
+            message: Message,
+            widget: MessageInput,
+            dialog_manager: DialogManager,
+    ):
+        adv = await Advertisement.get_or_none(id=dialog_manager.dialog_data['current_reklam_id'])
+        manager: User = await adv.manager
+
+        # send support_request to the manager
+        await message.copy_to(chat_id=manager.user_id)
+        await dialog_manager.event.bot.send_message(
+            chat_id=manager.user_id,
+            text=_('BLOGER_REQUEST_SUPPORT', reklam_id=adv.id),
+            reply_markup=support_kb(adv_id=dialog_manager.dialog_data['current_reklam_id']),
+        )
+
+        await message.answer(text=_('Сообщение отправлено, ожидайте ответа...'))
+        await dialog_manager.switch_to(BlogerStateGroup.menu)
