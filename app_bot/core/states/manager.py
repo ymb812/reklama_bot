@@ -9,3 +9,4 @@ class ManagerStateGroup(StatesGroup):
     user_menu = State()
     send_task = State()
     ask_stats = State()
+    handle_support = State()

@@ -64,7 +64,6 @@ class Advertisement(Model):
     photo_file_id = fields.CharField(max_length=256, null=True)
     video_file_id = fields.CharField(max_length=256, null=True)
     document_file_id = fields.CharField(max_length=256, null=True)
-    support_topic_link = fields.CharField(max_length=128, null=True)
 
     is_approved_by_bloger = fields.BooleanField(default=False)
     is_rejected = fields.BooleanField(default=False)

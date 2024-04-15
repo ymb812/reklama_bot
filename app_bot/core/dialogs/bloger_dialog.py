@@ -115,4 +115,17 @@ bloger_dialog = Dialog(
         SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_paid_menu', state=BlogerStateGroup.paid_reklam_menu),
         state=BlogerStateGroup.send_content
     ),
+
+    # support input
+    Window(
+        Const(text=_('Введите сообщение - оно будет отправлен менеджеру')),
+        MessageInput(
+            func=BlogerCallbackHandler.entered_support_msg,
+            content_types=[
+                ContentType.TEXT, ContentType.PHOTO, ContentType.VIDEO, ContentType.DOCUMENT, ContentType.VIDEO_NOTE
+            ]
+        ),
+        SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_paid_menu', state=BlogerStateGroup.paid_reklam_menu),
+        state=BlogerStateGroup.ask_support
+    ),
 )

@@ -8,3 +8,4 @@ class BlogerStateGroup(StatesGroup):
     reklams_list = State()
     paid_reklam_menu = State()
     send_content = State()
+    ask_support = State()

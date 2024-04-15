@@ -11,7 +11,7 @@ from core.states.manager import ManagerStateGroup
 from core.states.buyer import BuyerStateGroup
 from core.states.bloger import BlogerStateGroup
 from core.database.models import User, Advertisement, StatusType, UserStats
-from core.keyboards.inline import handle_paid_reklam_kb
+from core.keyboards.inline import handle_paid_reklam_kb, support_kb
 from core.utils.texts import _
 from settings import settings
 
@@ -384,11 +384,6 @@ class BlogerCallbackHandler:
         buyer_user_id = (await adv.buyer).user_id
         dialog_manager.dialog_data['buyer_user_id'] = buyer_user_id
 
-        bloger: User = await adv.bloger
-        bloger_username = get_username_or_link(user=bloger)
-        manager: User = await adv.manager
-        manager_username = get_username_or_link(user=manager)
-
         # send info to buyer
         if widget.widget_id == 'start_reklam':
             if buyer_user_id:
@@ -414,30 +409,7 @@ class BlogerCallbackHandler:
 
         # create topic (if not exists) with manager and agent (if exists)
         elif widget.widget_id == 'reschedule_reklam':
-            topic_link = adv.support_topic_link
-            if not topic_link:
-                chat = await dialog_manager.event.bot.get_chat(chat_id=settings.topics_id)
-                topic = await dialog_manager.event.bot.create_forum_topic(
-                    chat_id=settings.topics_id,
-                    name=f'Реклама {adv.id}',
-                )
-                topic_id = topic.message_thread_id
-                topic_link = f'{chat.invite_link}/{topic_id}'
-            adv.support_topic_link = topic_link
-            await adv.save()
-
-            # send msg to bloger, manager and agent
-            await callback.message.answer(text=_('MANAGER_SUPPORT', topic_link=topic_link))
-            await dialog_manager.event.bot.send_message(
-                chat_id=manager.user_id,
-                text=_('BLOGER_REQUEST_SUPPORT', topic_link=topic_link, reklam_id=adv.id),
-            )
-            if manager.agency_id:
-                await dialog_manager.event.bot.send_message(
-                    chat_id=(await manager.agency).user_id,
-                    text=_('BLOGER_REQUEST_SUPPORT', topic_link=topic_link, reklam_id=adv.id),
-                )
-
+            await dialog_manager.switch_to(BlogerStateGroup.ask_support)
             return
 
 
@@ -483,3 +455,24 @@ class BlogerCallbackHandler:
 
         await message.answer('Статистика успешно сохранена')
         await dialog_manager.switch_to(BlogerStateGroup.stats)
+
+
+    @staticmethod
+    async def entered_support_msg(
+            message: Message,
+            widget: MessageInput,
+            dialog_manager: DialogManager,
+    ):
+        adv = await Advertisement.get_or_none(id=dialog_manager.dialog_data['current_reklam_id'])
+        manager: User = await adv.manager
+
+        # send support_request to the manager
+        await message.copy_to(chat_id=manager.user_id)
+        await dialog_manager.event.bot.send_message(
+            chat_id=manager.user_id,
+            text=_('BLOGER_REQUEST_SUPPORT', reklam_id=adv.id),
+            reply_markup=support_kb(adv_id=dialog_manager.dialog_data['current_reklam_id']),
+        )
+
+        await message.answer(text=_('Сообщение отправлено, ожидайте ответа...'))
+        await dialog_manager.switch_to(BlogerStateGroup.menu)
