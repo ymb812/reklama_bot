@@ -280,7 +280,12 @@ msgstr "Выберите действие с блогером {inst_username}"
 
 
 msgid "MANAGER_SUPPORT"
-msgstr "Свяжитесь, пожалуйста, с менеджером: {username}"
+msgstr "Свяжитесь, пожалуйста, с менеджером в чате: {topic_link}"
+
+
+msgid "BLOGER_REQUEST_SUPPORT"
+msgstr "У блогера вопрос по рекламе с <b>ID</b> {reklam_id}\n\n"
+"Свяжитесь, пожалуйста, с блогером в чате: {topic_link}"
 
 
 msgid "BUYER_NOTIFICATION"

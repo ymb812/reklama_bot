@@ -1,6 +1,5 @@
 import string
 import random
-from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import ManagedTextInput, MessageInput
@@ -415,9 +414,32 @@ class BlogerCallbackHandler:
             await dialog_manager.switch_to(BlogerStateGroup.paid_reklam_menu)
 
 
-        # send manager contact and return
+        # create topic (if not exists) with manager and agent (if exists)
         elif widget.widget_id == 'reschedule_reklam':
-            await callback.message.answer(text=_('MANAGER_SUPPORT', username=manager_username))
+            topic_link = adv.support_topic_link
+            if not topic_link:
+                chat = await dialog_manager.event.bot.get_chat(chat_id=settings.topics_id)
+                topic = await dialog_manager.event.bot.create_forum_topic(
+                    chat_id=settings.topics_id,
+                    name=f'Реклама {adv.id}',
+                )
+                topic_id = topic.message_thread_id
+                topic_link = f'{chat.invite_link}/{topic_id}'
+            adv.support_topic_link = topic_link
+            await adv.save()
+
+            # send msg to bloger, manager and agent
+            await callback.message.answer(text=_('MANAGER_SUPPORT', topic_link=topic_link))
+            await dialog_manager.event.bot.send_message(
+                chat_id=manager.user_id,
+                text=_('BLOGER_REQUEST_SUPPORT', topic_link=topic_link, reklam_id=adv.id),
+            )
+            if manager.agency_id:
+                await dialog_manager.event.bot.send_message(
+                    chat_id=(await manager.agency).user_id,
+                    text=_('BLOGER_REQUEST_SUPPORT', topic_link=topic_link, reklam_id=adv.id),
+                )
+
             return
 
 
