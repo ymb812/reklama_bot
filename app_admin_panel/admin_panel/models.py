@@ -26,6 +26,7 @@ class User(models.Model):
     manager = models.ForeignKey('User', on_delete=models.CASCADE, related_name='to_manager', null=True, blank=True)
     agency = models.ForeignKey('User', on_delete=models.CASCADE, related_name='to_agency', null=True, blank=True)
 
+    subscription_ends_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
