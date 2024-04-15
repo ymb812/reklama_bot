@@ -114,8 +114,8 @@ class AgencyManagerCallbackHandler:
             return
 
         # add new user and send link
-        agency_id = None
         manager = await User.get(user_id=message.from_user.id)
+        agency_id = manager.agency_id  # if manager has agency, add bloger to the agency
         if manager.status == StatusType.agency:  # check is manager agency
             agency_id = manager.id
 
@@ -128,9 +128,7 @@ class AgencyManagerCallbackHandler:
             manager_id=manager.id
         )
 
-        await message.answer(
-            text=_(f'Пользователь со статусом {status} добавлен')
-        )
+        await message.answer(text=_('USER_IS_ADDED', status=status))
         await message.answer(link)
 
         # handle new buyer
