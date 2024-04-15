@@ -34,7 +34,7 @@ async def start_handler(
 
     # go to dialogs if already registered
     user = await User.get_or_none(user_id=message.from_user.id)
-    if user and user.status in StatusType:
+    if user and user.status and user.status in StatusType:
         if user.status == StatusType.agency:
             await set_admin_commands(bot=bot, scope=types.BotCommandScopeChat(chat_id=message.from_user.id))
             await dialog_manager.start(state=AgencyStateGroup.menu, mode=StartMode.RESET_STACK)

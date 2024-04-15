@@ -17,6 +17,8 @@ def payment_kb(agency_url: str, manager_url: str) -> InlineKeyboardMarkup:
     kb.button(text=_('AGENCY_PAY_BUTTON'), url=agency_url)
     kb.button(text=_('MANAGER_PAY_BUTTON'), url=manager_url)
     kb.button(text=_('SUPPORT_BUTTON'), url=settings.admin_chat_link)
+    kb.button(text=_('Пробный период | Менеджер'), callback_data='freesubmanager')
+    kb.button(text=_('Пробный период | Агентство'), callback_data='freesubagency')
     kb.adjust(1)
     return kb.as_markup(resize_keyboard=True)
 

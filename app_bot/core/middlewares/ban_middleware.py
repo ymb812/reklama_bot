@@ -1,3 +1,5 @@
+import pytz
+from datetime import datetime
 from typing import Any, Callable, Dict, Awaitable
 from aiogram import BaseMiddleware, types
 from aiogram_dialog import DialogManager
@@ -30,5 +32,17 @@ class BanMiddleware(BaseMiddleware):
 
         if user_data and user_data.is_banned:
             return
+
+        # check subscription_ends_at and set None status
+        if user_data and user_data.subscription_ends_at and user_data.subscription_ends_at < datetime.now(pytz.timezone('Europe/Moscow')):
+            await event.bot.send_message(chat_id=data['event_chat'].id, text='Подписка закончилась. Воспользуйтесь /start')
+            user_data.status = None
+            await user_data.save()
+
+            try:
+                await dialog_manager.reset_stack()
+            except:
+                pass
+            return await handler(event, data)
 
         return await handler(event, data)

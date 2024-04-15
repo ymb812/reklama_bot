@@ -30,23 +30,26 @@ class User(Model):
     manager = fields.ForeignKeyField('models.User', to_field='id', related_name='to_manager', null=True)
     agency = fields.ForeignKeyField('models.User', to_field='id', related_name='to_agency', null=True)
 
+    subscription_ends_at = fields.DatetimeField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
     @classmethod
-    async def update_data(cls, user_id: int, username: str, status: str):
+    async def update_data(cls, user_id: int, username: str, status: str, subscription_ends_at: datetime):
         user = await cls.filter(user_id=user_id).first()
         if user is None:
             await cls.create(
                 user_id=user_id,
                 username=username,
                 status=status,
+                subscription_ends_at=subscription_ends_at,
             )
         else:
             await cls.filter(user_id=user_id).update(
                 username=username,
                 status=status,
-                updated_at=datetime.now()
+                updated_at=datetime.now(),
+                subscription_ends_at=subscription_ends_at,
             )
 
     @classmethod

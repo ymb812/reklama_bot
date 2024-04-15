@@ -18,8 +18,9 @@ class UserResource(ModelResource):
 @admin.register(User)
 class UserAdmin(CustomImportExport):
     resource_classes = [UserResource]
-    list_display = ('id', 'user_id', 'username', 'inst_username', 'status', 'is_banned', 'link', 'created_at')
-    list_display_links = ('user_id', )
+    list_display = ('id', 'user_id', 'username', 'inst_username', 'status', 'is_banned', 'link', 'subscription_ends_at',
+                    'created_at')
+    list_display_links = ('id', 'user_id')
     list_editable = ('status', 'username', 'is_banned')
 
 
