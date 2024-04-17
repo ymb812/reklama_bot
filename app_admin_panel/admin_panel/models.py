@@ -26,11 +26,15 @@ class User(models.Model):
     manager = models.ForeignKey('User', on_delete=models.CASCADE, related_name='to_manager', null=True, blank=True)
     agency = models.ForeignKey('User', on_delete=models.CASCADE, related_name='to_agency', null=True, blank=True)
 
+    subscription_ends_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f'{self.id}'
+        display = f'{self.username}'
+        if display == 'None':
+            display = f'{self.user_id}'
+        return display
 
 
 class Advertisement(models.Model):
@@ -61,6 +65,19 @@ class Advertisement(models.Model):
 
     def __str__(self):
         return f'{self.id}'
+
+
+class UserStats(models.Model):
+    class Meta:
+        db_table = 'user_stats'
+        ordering = ['id']
+        verbose_name = 'Статистика'
+        verbose_name_plural = verbose_name
+
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='user_stats')
+    video_file_id = models.CharField(max_length=256, null=True, blank=True)
+    document_file_id = models.CharField(max_length=256, null=True, blank=True)
 
 
 class Dispatcher(models.Model):

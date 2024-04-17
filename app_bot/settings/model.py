@@ -11,6 +11,8 @@ class BotSettings(BaseModel):
     welcome_post_id: int = fields.Field(alias='WELCOME_POST_ID')
     welcome_post_id_2: int = fields.Field(alias='WELCOME_POST_ID_2')
     notification_post_id: int = fields.Field(alias='NOTIFICATION_POST_ID')
+    sub_days: int = fields.Field(alias='SUB_DAYS', default=31)
+    free_sub_days: int = fields.Field(alias='FREE_SUB_DAYS', default=3)
 
 
 class Dialogues(BaseModel):

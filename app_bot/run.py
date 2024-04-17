@@ -16,14 +16,15 @@ storage = RedisStorage.from_url(
     url=f'redis://{settings.redis_host}:{settings.redis_port}/{settings.redis_name}',
     key_builder=DefaultKeyBuilder(with_destiny=True)
 )
+
 dp = Dispatcher(storage=storage)
+for _r in routers + dialogues:
+    dp.include_router(_r)
+
+setup_dialogs(dp)
 core.middlewares.i18n.setup(dp)
 dp.message.middleware(BanMiddleware())
 dp.callback_query.middleware(BanMiddleware())
-setup_dialogs(dp)
-
-for _r in routers + dialogues:
-    dp.include_router(_r)
 
 
 async def main():

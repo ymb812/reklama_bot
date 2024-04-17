@@ -10,8 +10,8 @@ from core.states.agency import AgencyStateGroup
 from core.states.manager import ManagerStateGroup
 from core.states.buyer import BuyerStateGroup
 from core.states.bloger import BlogerStateGroup
-from core.database.models import User, Advertisement, StatusType
-from core.keyboards.inline import handle_paid_reklam_kb
+from core.database.models import User, Advertisement, StatusType, UserStats
+from core.keyboards.inline import handle_paid_reklam_kb, support_kb
 from core.utils.texts import _
 from settings import settings
 
@@ -114,8 +114,8 @@ class AgencyManagerCallbackHandler:
             return
 
         # add new user and send link
-        agency_id = None
         manager = await User.get(user_id=message.from_user.id)
+        agency_id = manager.agency_id  # if manager has agency, add bloger to the agency
         if manager.status == StatusType.agency:  # check is manager agency
             agency_id = manager.id
 
@@ -128,9 +128,7 @@ class AgencyManagerCallbackHandler:
             manager_id=manager.id
         )
 
-        await message.answer(
-            text=_(f'Пользователь со статусом {status} добавлен')
-        )
+        await message.answer(text=_('USER_IS_ADDED', status=status))
         await message.answer(link)
 
         # handle new buyer
@@ -203,7 +201,26 @@ class AgencyManagerCallbackHandler:
             dialog_manager: DialogManager,
             item_id: str | None = None,
     ):
-        await callback.message.answer('Здесь будет запрос статистики у блогера')
+        # send request to the bloger
+        manager = await User.get(user_id=callback.from_user.id)
+        manager_username = get_username_or_link(user=manager)
+
+        bloger_id = get_dialog_data(dialog_manager=dialog_manager, key='user_id')
+        bloger = await User.get(id=bloger_id)
+        bloger_username = get_username_or_link(user=bloger)
+
+        if bloger.user_id:
+            await dialog_manager.event.bot.send_message(
+                chat_id=bloger.user_id,
+                text=_('STATS_REQUEST', manager_username=manager_username)
+            )
+            await callback.message.answer(text=_('STATS_REQUEST_IS_SENT', bloger_username=bloger_username))
+
+        # buyer has no user_id
+        else:
+            await callback.message.answer(text=_('USER_NOTIFICATION_ERROR'))
+            return
+
 
         await dialog_manager.switch_to(ManagerStateGroup.user_menu)
 
@@ -215,7 +232,15 @@ class AgencyManagerCallbackHandler:
             dialog_manager: DialogManager,
             item_id: str | None = None,
     ):
-        await callback.message.answer('Здесь будет просмотр статистики')
+        user_stats = await UserStats.get_or_none(user_id=get_dialog_data(dialog_manager=dialog_manager, key='user_id'))
+        if not user_stats or not user_stats.video_file_id and not user_stats.document_file_id:
+            await callback.message.answer(text='Блогер не загрузил статистику')
+        else:
+            # send video or document
+            if user_stats.video_file_id:
+                await callback.message.answer_video(video=user_stats.video_file_id)
+            elif user_stats.document_file_id:
+                await callback.message.answer_document(document=user_stats.document_file_id)
 
         await dialog_manager.switch_to(ManagerStateGroup.user_menu)
 
@@ -338,8 +363,6 @@ class BlogerCallbackHandler:
             # change adv status and send msg to manager
             adv.is_approved_by_bloger = True
 
-            await callback.message.answer(text='Далее как-то происходит согласование')
-
         elif widget.widget_id == 'reject_reklam':
             adv.is_rejected = True
 
@@ -361,32 +384,32 @@ class BlogerCallbackHandler:
         buyer_user_id = (await adv.buyer).user_id
         dialog_manager.dialog_data['buyer_user_id'] = buyer_user_id
 
-        bloger: User = await adv.bloger
-        bloger_username = get_username_or_link(user=bloger)
-        manager: User = await adv.manager
-        manager_username = get_username_or_link(user=manager)
-
         # send info to buyer
         if widget.widget_id == 'start_reklam':
             if buyer_user_id:
-                await dialog_manager.event.bot.send_message(
-                    chat_id=buyer_user_id,
-                    text=_('BUYER_NOTIFICATION', username=bloger_username)
-                )
-                await callback.message.answer(text=_('BUYER_NOTIFICATION_IS_SENT', manager_username=manager_username))
+                try:
+                    await dialog_manager.event.bot.send_message(
+                        chat_id=buyer_user_id,
+                        text=_('BUYER_NOTIFICATION', reklam_id=adv.id)
+                    )
+                except:
+                    await callback.message.answer(text=_('USER_NOTIFICATION_ERROR'))
+                    return
+
+                await callback.message.answer(text=_('BUYER_NOTIFICATION_IS_SENT'))
 
             # buyer has no user_id
             else:
-                await callback.message.answer(text=_('BUYER_NOTIFICATION_ERROR'))
+                await callback.message.answer(text=_('USER_NOTIFICATION_ERROR'))
                 return
 
             # going to get TZ
             await dialog_manager.switch_to(BlogerStateGroup.paid_reklam_menu)
 
 
-        # send manager contact and return
+        # create topic (if not exists) with manager and agent (if exists)
         elif widget.widget_id == 'reschedule_reklam':
-            await callback.message.answer(text=_('MANAGER_SUPPORT', username=manager_username))
+            await dialog_manager.switch_to(BlogerStateGroup.ask_support)
             return
 
 
@@ -397,11 +420,59 @@ class BlogerCallbackHandler:
             dialog_manager: DialogManager,
     ):
         # send content to the buyer
-        await message.forward(chat_id=dialog_manager.dialog_data['buyer_user_id'])
+        await message.copy_to(chat_id=dialog_manager.dialog_data['buyer_user_id'])
         await dialog_manager.event.bot.send_message(
             chat_id=dialog_manager.dialog_data['buyer_user_id'],
-            text=_('PICK_ACTION'),
+            text=_('PICK_ACTION_FOR_REKLAM', reklam_id=dialog_manager.dialog_data['current_reklam_id']),
             reply_markup=handle_paid_reklam_kb(adv_id=dialog_manager.dialog_data['current_reklam_id']),
         )
 
         await dialog_manager.switch_to(BlogerStateGroup.reklams_list)
+
+
+    @staticmethod
+    async def entered_stats(
+            message: Message,
+            widget: MessageInput,
+            dialog_manager: DialogManager,
+    ):
+        # handle file input
+        video_file_id, document_file_id = None, None
+        if message.video:
+            video_file_id = message.video.file_id
+        elif message.document:
+            document_file_id = message.document.file_id
+
+        # save video or document
+        bloger = await User.get_or_none(user_id=message.from_user.id)
+        user_stats = await UserStats.get_or_none(user=bloger)
+        if not user_stats:
+            await UserStats.create(user=bloger, video_file_id=video_file_id, document_file_id=document_file_id)
+        else:
+            user_stats.video_file_id = video_file_id
+            user_stats.document_file_id = document_file_id
+            await user_stats.save()
+
+        await message.answer('Статистика успешно сохранена')
+        await dialog_manager.switch_to(BlogerStateGroup.stats)
+
+
+    @staticmethod
+    async def entered_support_msg(
+            message: Message,
+            widget: MessageInput,
+            dialog_manager: DialogManager,
+    ):
+        adv = await Advertisement.get_or_none(id=dialog_manager.dialog_data['current_reklam_id'])
+        manager: User = await adv.manager
+
+        # send support_request to the manager
+        await message.copy_to(chat_id=manager.user_id)
+        await dialog_manager.event.bot.send_message(
+            chat_id=manager.user_id,
+            text=_('BLOGER_REQUEST_SUPPORT', reklam_id=adv.id),
+            reply_markup=support_kb(adv_id=dialog_manager.dialog_data['current_reklam_id']),
+        )
+
+        await message.answer(text=_('Сообщение отправлено, ожидайте ответа...'))
+        await dialog_manager.switch_to(BlogerStateGroup.menu)

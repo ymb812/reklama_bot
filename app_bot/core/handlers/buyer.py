@@ -12,7 +12,7 @@ router = Router(name='Buyer commands router')
 
 
 
-@router.callback_query(lambda c: 'confirm_' in c.data or 'reject_' in c.data)
+@router.callback_query(lambda c: 'buyer_confirm_' in c.data or 'buyer_reject_' in c.data)
 async def handle_reklam_from_bloger(callback: types.CallbackQuery, bot: Bot, state: FSMContext):
     await state.set_state(BuyerStateGroup.handle_reklam_from_bloger)
     await callback.message.delete()
@@ -21,10 +21,12 @@ async def handle_reklam_from_bloger(callback: types.CallbackQuery, bot: Bot, sta
     bloger = await adv.bloger
     if 'confirm_' in callback.data:
         msg = await callback.message.answer(text=_('INPUT_COMMENT'))
+        adv.is_done = True
 
     else:
         msg = await callback.message.answer(text=_('INPUT_CHANGES'))
 
+    await adv.save()
     await state.update_data(
         adv_id=adv.id, bloger_user_id=bloger.user_id, callback_data=callback.data, old_msg_id=msg.message_id
     )
@@ -47,5 +49,5 @@ async def send_comment_to_bloger(message: types.Message, bot: Bot, state: FSMCon
             text=_('RESPONSE_FROM_BUYER', reklam_id=state_data['adv_id'])
         )
 
-    await message.forward(chat_id=state_data['bloger_user_id'])
+    await message.copy_to(chat_id=state_data['bloger_user_id'])
     await state.clear()

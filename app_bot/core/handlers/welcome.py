@@ -18,16 +18,25 @@ logger = logging.getLogger(__name__)
 router = Router(name='Start router')
 
 
-@router.message(Command(commands=['start']), StateFilter(None))
+@router.message(Command(commands=['start']))
 async def start_handler(
-        message: types.Message, bot: Bot, state: FSMContext, command: CommandObject, dialog_manager: DialogManager
+        message: types.Message,
+        bot: Bot,
+        state: FSMContext,
+        dialog_manager: DialogManager,
+        command: CommandObject,
 ):
     await state.clear()
+    try:
+        await dialog_manager.reset_stack()
+    except:
+        pass
 
     # go to dialogs if already registered
     user = await User.get_or_none(user_id=message.from_user.id)
-    if user and user.status in StatusType:
+    if user and user.status and user.status in StatusType:
         if user.status == StatusType.agency:
+            await set_admin_commands(bot=bot, scope=types.BotCommandScopeChat(chat_id=message.from_user.id))
             await dialog_manager.start(state=AgencyStateGroup.menu, mode=StartMode.RESET_STACK)
         elif user.status == StatusType.manager:
             await dialog_manager.start(state=ManagerStateGroup.menu, mode=StartMode.RESET_STACK)

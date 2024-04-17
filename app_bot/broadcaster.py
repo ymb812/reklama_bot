@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from datetime import datetime
+from tortoise.expressions import Q
 from aiogram import Bot, types
 from aiogram.utils.i18n import I18n
 from core.database import init
@@ -60,14 +61,23 @@ class Broadcaster(object):
             bot: Bot,
             status: StatusType | None = None,
             message: types.Message | None = None,
-            broadcaster_post: Post | None = None
+            broadcaster_post: Post | None = None,
+            agency_or_manager_user_id: int | None = None  # for /send
     ):
         sent_amount = 0
 
-        if not status:
-            users_ids = await User.all()
+        if agency_or_manager_user_id:
+            users_ids = await User.filter(
+                Q(status=status) & (
+                    (Q(agency__user_id=agency_or_manager_user_id) | Q(manager__user_id=agency_or_manager_user_id))
+                )
+            ).all()
+
         else:
-            users_ids = await User.filter(status=status).all()
+            if not status:
+                users_ids = await User.all()
+            else:
+                users_ids = await User.filter(status=status).all()
 
         if not users_ids:
             return sent_amount
