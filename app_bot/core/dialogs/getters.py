@@ -13,11 +13,19 @@ async def get_input_data(dialog_manager: DialogManager, **kwargs):
 
 async def get_users(dialog_manager: DialogManager, **kwargs):
     agency_or_manager = await User.get(user_id=dialog_manager.event.from_user.id)
-
     status = get_dialog_data(dialog_manager=dialog_manager, key='type')
-    users = await User.filter(
-        Q(status=status) & ((Q(agency_id=agency_or_manager.id) | Q(manager_id=agency_or_manager.id)))
-    ).all()
+
+    # if clicked for full blogers list
+    if get_dialog_data(dialog_manager=dialog_manager, key='is_full_blogers_list'):
+        dialog_manager.dialog_data['is_full_blogers_list'] = False  # clean data
+        users = await User.filter(
+            status=status, agency_id=agency_or_manager.agency_id,
+        ).all()
+
+    else:
+        users = await User.filter(
+            Q(status=status) & ((Q(agency_id=agency_or_manager.id) | Q(manager_id=agency_or_manager.id)))
+        ).all()
 
     return {
         'users': users

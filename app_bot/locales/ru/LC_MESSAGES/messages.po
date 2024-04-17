@@ -81,6 +81,10 @@ msgid "BLOGERS_LIST_BUTTON"
 msgstr "📋 Список блогеров"
 
 
+msgid "FULL_BLOGERS_LIST_BUTTON"
+msgstr "📋 Список блогеров агентства"
+
+
 msgid "MANAGERS_LIST_BUTTON"
 msgstr "📋 Список менеджеров"
 
