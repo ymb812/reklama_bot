@@ -39,6 +39,7 @@ manager_dialog = Dialog(
         Const(text=_('PICK_ACTION')),
         Button(Const(text=_('ADD_BLOGER_BUTTON')), id='manager_add_bloger', on_click=AgencyManagerCallbackHandler.add_user),
         Button(Const(text=_('BLOGERS_LIST_BUTTON')), id='manager_blogers_list', on_click=AgencyManagerCallbackHandler.list_of_users),
+        Button(Const(text=_('FULL_BLOGERS_LIST_BUTTON')), id='full_blogers_list', on_click=AgencyManagerCallbackHandler.list_of_users),
         Button(Const(text=_('REKLAMS_LIST_BUTTON')), id='reklams_list', on_click=AgencyManagerCallbackHandler.list_of_reklams),
         state=ManagerStateGroup.menu,
     ),

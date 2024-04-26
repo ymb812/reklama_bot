@@ -77,6 +77,12 @@ class AgencyManagerCallbackHandler:
             dialog_manager.dialog_data['type'] = 'bloger'
             await dialog_manager.switch_to(ManagerStateGroup.users_list)
 
+        elif 'full_blogers_list' in callback.data:
+            dialog_manager.dialog_data['type'] = 'bloger'
+            dialog_manager.dialog_data['is_full_blogers_list'] = True
+            await dialog_manager.switch_to(ManagerStateGroup.users_list)
+
+
         # handle agency states
         elif 'blogers_list' in callback.data:
             dialog_manager.dialog_data['type'] = 'bloger'
