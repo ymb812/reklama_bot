@@ -53,19 +53,19 @@ async def start_handler(
     # default welcome
     if not command.args:
         agency_url = await bot.create_invoice_link(
-            title=_('AGENCY_INVOICE_TITLE'),
-            description=_('AGENCY_INVOICE_DESCRIPTION'),
+            title='Подписка "Агенство"',
+            description='Данная подписка поможет вам автоматизировать процессы в рекламе, удобно вести статистику, собрать команду и управлять ей в одном боте',
             provider_token=settings.payments_provider_token.get_secret_value(),
             currency='rub',
-            prices=[types.LabeledPrice(label=_('AGENCY_INVOICE_TITLE'), amount=2999 * 100)],
+            prices=[types.LabeledPrice(label='Подписка "Агенство"', amount=2999 * 100)],
             payload=f'agency'
             )
         manager_url = await bot.create_invoice_link(
-            title=_('MANAGER_INVOICE_TITLE'),
-            description=_('MANAGER_INVOICE_DESCRIPTION'),
+            title='Подписка "Менеджер"',
+            description='Данная подписка поможет вам автоматизировать процессы в рекламе, удобно вести статистику',
             provider_token=settings.payments_provider_token.get_secret_value(),
             currency='rub',
-            prices=[types.LabeledPrice(label=_('MANAGER_INVOICE_TITLE'), amount=399 * 100)],
+            prices=[types.LabeledPrice(label='Подписка "Менеджер"', amount=399 * 100)],
             payload=f'manager'
             )
 
