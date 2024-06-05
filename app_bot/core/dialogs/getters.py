@@ -38,8 +38,11 @@ async def get_user(dialog_manager: DialogManager, **kwargs):
     if not user:
         raise ValueError
 
+    reklams_sum = sum(adv.price for adv in await Advertisement.filter(manager_id=user_id))
+
     return {
-        'user': user
+        'user': user,
+        'reklams_sum': reklams_sum,
     }
 
 

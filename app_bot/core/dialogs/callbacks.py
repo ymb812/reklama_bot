@@ -323,6 +323,7 @@ class AgencyManagerCallbackHandler:
         await User.filter(id=get_dialog_data(dialog_manager=dialog_manager, key='user_id')).update(
             manager_percent=value,
         )
+        await dialog_manager.switch_to(state=AgencyStateGroup.user_menu)
 
 
     @staticmethod

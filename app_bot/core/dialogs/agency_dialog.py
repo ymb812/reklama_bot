@@ -65,7 +65,8 @@ agency_dialog = Dialog(
 
     # user menu
     Window(
-        Format(text=_('PICK_ACTION')),
+        Format(text='<b>Текущий процент менеджера:</b> {user.manager_percent}%\n\n'
+                    '<b>Сумма реклам:</b> {reklams_sum} рублей'),
         Button(
             Const(text=_('REKLAMS_LIST_BUTTON')),
             id='agency_manager_reklams',
