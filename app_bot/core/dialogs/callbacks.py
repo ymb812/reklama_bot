@@ -161,6 +161,17 @@ class AgencyManagerCallbackHandler:
 
 
     @staticmethod
+    async def entered_price(
+            message: Message,
+            widget: ManagedTextInput,
+            dialog_manager: DialogManager,
+            value: int | float,
+    ):
+        dialog_manager.dialog_data['price'] = value
+        await dialog_manager.switch_to(ManagerStateGroup.send_task)
+
+
+    @staticmethod
     async def entered_task(
             message: Message,
             widget: MessageInput,
@@ -188,6 +199,7 @@ class AgencyManagerCallbackHandler:
 
         adv = await Advertisement.create(
             text=text,
+            price=dialog_manager.dialog_data['price'],
             photo_file_id=photo_file_id,
             video_file_id=video_file_id,
             document_file_id=document_file_id,

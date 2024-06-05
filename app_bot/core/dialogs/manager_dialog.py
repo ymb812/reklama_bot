@@ -80,12 +80,24 @@ manager_dialog = Dialog(
     # user menu
     Window(
         Format(text=_('PICK_BLOGER_ACTION', inst_username='{user.inst_username}')),
-        SwitchTo(Const(text=_('SEND_TASK_BUTTON')), id='send_task', state=ManagerStateGroup.send_task),
+        SwitchTo(Const(text=_('SEND_TASK_BUTTON')), id='send_task', state=ManagerStateGroup.input_price),
         SwitchTo(Const(text=_('STATS_BUTTON')), id='ask_stats', state=ManagerStateGroup.ask_stats),
         # Button(Const(text=_('DELETE')), id='delete_user', on_click=AgencyManagerCallbackHandler.delete_user),
         SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_list', state=ManagerStateGroup.users_list),
         getter=get_user,
         state=ManagerStateGroup.user_menu,
+    ),
+
+    # input_price
+    Window(
+        Const(text='Введите число - стоимость в рублях'),
+        TextInput(
+            id='input_price',
+            type_factory=float,
+            on_success=AgencyManagerCallbackHandler.entered_price,
+        ),
+        SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_user_menu', state=ManagerStateGroup.user_menu),
+        state=ManagerStateGroup.input_price,
     ),
 
     # task input
@@ -95,7 +107,7 @@ manager_dialog = Dialog(
             func=AgencyManagerCallbackHandler.entered_task,
             content_types=[ContentType.TEXT, ContentType.PHOTO, ContentType.VIDEO, ContentType.DOCUMENT]
         ),
-        SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_user_menu', state=ManagerStateGroup.user_menu),
+        SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_input_price', state=ManagerStateGroup.input_price),
         state=ManagerStateGroup.send_task,
     ),
 

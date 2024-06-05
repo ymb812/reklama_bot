@@ -63,6 +63,7 @@ class Advertisement(Model):
         ordering = ['id']
 
     id = fields.BigIntField(pk=True)
+    price = fields.BigIntField()
     text = fields.TextField(null=True)
     photo_file_id = fields.CharField(max_length=256, null=True)
     video_file_id = fields.CharField(max_length=256, null=True)
