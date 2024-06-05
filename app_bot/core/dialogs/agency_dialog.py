@@ -26,7 +26,7 @@ agency_dialog = Dialog(
                on_click=AgencyManagerCallbackHandler.list_of_users),
         Button(Const(text=_('REKLAMS_LIST_BUTTON')), id='agency_reklams_list',
                on_click=AgencyManagerCallbackHandler.list_of_reklams_for_agency),
-        SwitchTo(Const(text='Заработок за период'), id='agency_income', state=AgencyStateGroup.input_period),
+        SwitchTo(Const(text='Статистика за период'), id='agency_income', state=AgencyStateGroup.input_period),
 
         state=AgencyStateGroup.menu,
     ),
@@ -66,7 +66,8 @@ agency_dialog = Dialog(
 
     # user menu
     Window(
-        Format(text='<b>Текущий процент менеджера:</b> {user.manager_percent}%\n\n'
+        Format(text='<b>Менеджер {user.username}</b>\n\n'
+                    '<b>Текущий процент менеджера:</b> {user.manager_percent}%\n'
                     '<b>Сумма реклам:</b> {reklams_sum} рублей'),
         Button(
             Const(text=_('REKLAMS_LIST_BUTTON')),
@@ -95,7 +96,7 @@ agency_dialog = Dialog(
 
     # input_period
     Window(
-        Const(text='Введите период в формате: <code>01.05.2024-11.05.2024</code>'),
+        Const(text='Введите период в формате: <code>01.01.2024-01.01.2025</code>'),
         TextInput(
             id='input_period_agency',
             type_factory=str,
@@ -111,6 +112,7 @@ agency_dialog = Dialog(
                     '<b>Чистая прибыль :</b> {clear_income} рублей\n'
                     '<b>Процент сотрудникам:</b> {managers_income} рублей\n'
                     '<b>Кол-во ТЗ:</b> {advertisements_amount}\n'),
+        Button(Const(text='Подробная статистика'), id='excel_stats', on_click=AgencyManagerCallbackHandler.excel_stats),
         SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_input_period', state=AgencyStateGroup.input_period),
         getter=get_stats_by_period,
         state=AgencyStateGroup.stats_by_period,
