@@ -1,3 +1,4 @@
+from datetime import datetime
 from aiogram.types import ContentType
 from aiogram_dialog import DialogManager
 from aiogram_dialog.api.entities import MediaAttachment
@@ -150,4 +151,28 @@ async def get_user_stats(dialog_manager: DialogManager, **kwargs):
 
     return {
         'media_content': media_content
+    }
+
+
+async def get_stats_by_period(dialog_manager: DialogManager, **kwargs):
+    start_date = datetime.strptime(dialog_manager.dialog_data['start_date_str'], '%d.%m.%Y')
+    end_date = datetime.strptime(dialog_manager.dialog_data['end_date_str'], '%d.%m.%Y')
+
+    advertisements = await Advertisement.filter(
+        created_at__gte=start_date,
+        created_at__lte=end_date,
+    ).all()
+
+    full_income, managers_income, clear_income = 0, 0, 0
+    for adv in advertisements:
+        manager: User = await adv.manager
+
+        full_income += adv.price
+        managers_income += round(adv.price * manager.manager_percent / 100)
+
+    return {
+        'full_income': full_income,
+        'managers_income': managers_income,
+        'clear_income': full_income - managers_income,
+        'advertisements_amount': len(advertisements),
     }

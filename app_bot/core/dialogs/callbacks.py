@@ -1,5 +1,6 @@
 import string
 import random
+from datetime import datetime
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import ManagedTextInput, MessageInput
@@ -351,6 +352,27 @@ class AgencyManagerCallbackHandler:
     ):
         dialog_manager.dialog_data['type'] = 'buyer'
         await dialog_manager.switch_to(ManagerStateGroup.create_bloger_link)
+
+
+    @staticmethod
+    async def input_period(
+            message: Message,
+            widget: ManagedTextInput,
+            dialog_manager: DialogManager,
+            value: str,
+    ):
+        try:
+            start_date_str, end_date_str = value.split('-')
+
+            # check is data correct
+            start_date = datetime.strptime(start_date_str, '%d.%m.%Y')
+            end_date = datetime.strptime(end_date_str, '%d.%m.%Y')
+        except ValueError:
+            return
+
+        dialog_manager.dialog_data['start_date_str'] = start_date_str
+        dialog_manager.dialog_data['end_date_str'] = end_date_str
+        await dialog_manager.switch_to(AgencyStateGroup.stats_by_period)
 
 
 class BlogerCallbackHandler:

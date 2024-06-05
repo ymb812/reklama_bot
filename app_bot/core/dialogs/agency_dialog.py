@@ -4,7 +4,7 @@ from aiogram_dialog.widgets.text import Const, Format
 from aiogram_dialog.widgets.markup.reply_keyboard import ReplyKeyboardFactory
 from aiogram_dialog.widgets.kbd import Button, SwitchTo, RequestContact, Select
 from aiogram_dialog.widgets.input import TextInput, MessageInput
-from core.dialogs.getters import get_input_data, get_users, get_user
+from core.dialogs.getters import get_users, get_user, get_stats_by_period
 from core.dialogs.custom_content import CustomPager
 from core.dialogs.callbacks import AgencyManagerCallbackHandler
 from core.states.agency import AgencyStateGroup
@@ -26,6 +26,7 @@ agency_dialog = Dialog(
                on_click=AgencyManagerCallbackHandler.list_of_users),
         Button(Const(text=_('REKLAMS_LIST_BUTTON')), id='agency_reklams_list',
                on_click=AgencyManagerCallbackHandler.list_of_reklams_for_agency),
+        SwitchTo(Const(text='Заработок за период'), id='agency_income', state=AgencyStateGroup.input_period),
 
         state=AgencyStateGroup.menu,
     ),
@@ -90,5 +91,28 @@ agency_dialog = Dialog(
         SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_user_menu', state=AgencyStateGroup.user_menu),
         getter=get_user,
         state=AgencyStateGroup.edit_manager_percent,
+    ),
+
+    # input_period
+    Window(
+        Const(text='Введите период в формате: <code>01.05.2024-11.05.2024</code>'),
+        TextInput(
+            id='input_period',
+            type_factory=str,
+            on_success=AgencyManagerCallbackHandler.input_period
+        ),
+        SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_menu', state=AgencyStateGroup.menu),
+        state=AgencyStateGroup.input_period,
+    ),
+
+    # stats_by_period
+    Window(
+        Format(text='<b>Доход:</b> {full_income} рублей\n'
+                    '<b>Чистая прибыль :</b> {clear_income} рублей\n'
+                    '<b>Процент сотрудникам:</b> {managers_income} рублей\n'
+                    '<b>Кол-во ТЗ:</b> {advertisements_amount}\n'),
+        SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_input_period', state=AgencyStateGroup.input_period),
+        getter=get_stats_by_period,
+        state=AgencyStateGroup.stats_by_period,
     ),
 )
