@@ -72,8 +72,22 @@ agency_dialog = Dialog(
             on_click=AgencyManagerCallbackHandler.list_of_reklams_for_agency
         ),
         #Button(Const(text=_('DELETE')), id='delete_user', on_click=AgencyManagerCallbackHandler.add_user),
+        SwitchTo(Const(text='Изменить процент с продаж'), id='edit_manager_percent', state=AgencyStateGroup.edit_manager_percent),
         SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_list', state=AgencyStateGroup.users_list),
         getter=get_user,
         state=AgencyStateGroup.user_menu,
+    ),
+
+    # edit_manager_percent
+    Window(
+        Format(text='Введите число\n\n<i>Текущий процент менеджера: {user.manager_percent}%</i>'),
+        TextInput(
+            id='input_manager_percent',
+            type_factory=float,
+            on_success=AgencyManagerCallbackHandler.edit_manager_percent,
+        ),
+        SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_user_menu', state=AgencyStateGroup.user_menu),
+        getter=get_user,
+        state=AgencyStateGroup.edit_manager_percent,
     ),
 )

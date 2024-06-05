@@ -314,6 +314,18 @@ class AgencyManagerCallbackHandler:
 
 
     @staticmethod
+    async def edit_manager_percent(
+            message: Message,
+            widget: ManagedTextInput,
+            dialog_manager: DialogManager,
+            value: int | float,
+    ):
+        await User.filter(id=get_dialog_data(dialog_manager=dialog_manager, key='user_id')).update(
+            manager_percent=value,
+        )
+
+
+    @staticmethod
     async def list_of_reklams_for_buyer(
             callback: CallbackQuery,
             widget: Button | Select,

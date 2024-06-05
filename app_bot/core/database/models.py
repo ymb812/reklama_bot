@@ -26,6 +26,7 @@ class User(Model):
     status = fields.CharEnumField(enum_type=StatusType, max_length=64, null=True)
     link = fields.CharField(max_length=64, unique=True, null=True)
     is_banned = fields.BooleanField(default=False)
+    manager_percent = fields.FloatField(default=0)
 
     manager = fields.ForeignKeyField('models.User', to_field='id', related_name='to_manager', null=True)
     agency = fields.ForeignKeyField('models.User', to_field='id', related_name='to_agency', null=True)
