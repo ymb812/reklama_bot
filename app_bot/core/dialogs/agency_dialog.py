@@ -97,7 +97,7 @@ agency_dialog = Dialog(
     Window(
         Const(text='Введите период в формате: <code>01.05.2024-11.05.2024</code>'),
         TextInput(
-            id='input_period',
+            id='input_period_agency',
             type_factory=str,
             on_success=AgencyManagerCallbackHandler.input_period
         ),

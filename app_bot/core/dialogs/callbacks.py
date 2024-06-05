@@ -372,7 +372,11 @@ class AgencyManagerCallbackHandler:
 
         dialog_manager.dialog_data['start_date_str'] = start_date_str
         dialog_manager.dialog_data['end_date_str'] = end_date_str
-        await dialog_manager.switch_to(AgencyStateGroup.stats_by_period)
+
+        if widget.widget.widget_id == 'input_period_agency':
+            await dialog_manager.switch_to(AgencyStateGroup.stats_by_period)
+        elif widget.widget.widget_id == 'input_period_manager':
+            await dialog_manager.switch_to(ManagerStateGroup.stats_by_period)
 
 
 class BlogerCallbackHandler:

@@ -11,3 +11,6 @@ class ManagerStateGroup(StatesGroup):
     send_task = State()
     ask_stats = State()
     handle_support = State()
+    input_period = State()
+    stats_by_period = State()
+
