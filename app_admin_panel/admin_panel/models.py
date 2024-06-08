@@ -46,6 +46,7 @@ class Advertisement(models.Model):
 
 
     id = models.AutoField(primary_key=True)
+    price = models.BigIntegerField()
     text = models.TextField(blank=True, null=True)
     photo_file_id = models.CharField(max_length=256, blank=True, null=True)
     video_file_id = models.CharField(max_length=256, blank=True, null=True)
