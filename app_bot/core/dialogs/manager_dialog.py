@@ -8,7 +8,7 @@ from aiogram_dialog.widgets.kbd import PrevPage, NextPage, CurrentPage, Start, C
     FirstPage, LastPage, SwitchTo, Select
 from core.dialogs.custom_content import CustomPager
 from core.dialogs.callbacks import AgencyManagerCallbackHandler
-from core.dialogs.getters import get_users, get_user, get_reklams_by_status
+from core.dialogs.getters import get_users, get_user, get_reklams_by_status, get_manager_stats_by_period, get_manager
 from core.states.manager import ManagerStateGroup
 from core.states.agency import AgencyStateGroup
 from core.utils.texts import _
@@ -41,6 +41,9 @@ manager_dialog = Dialog(
         Button(Const(text=_('BLOGERS_LIST_BUTTON')), id='manager_blogers_list', on_click=AgencyManagerCallbackHandler.list_of_users),
         Button(Const(text=_('FULL_BLOGERS_LIST_BUTTON')), id='full_blogers_list', on_click=AgencyManagerCallbackHandler.list_of_users),
         Button(Const(text=_('REKLAMS_LIST_BUTTON')), id='reklams_list', on_click=AgencyManagerCallbackHandler.list_of_reklams),
+        SwitchTo(Const(text='Заработок за период'), id='manager_income', state=ManagerStateGroup.input_period,
+                 when=~F['user'].agency_id),
+        getter=get_manager,
         state=ManagerStateGroup.menu,
     ),
 
@@ -80,12 +83,24 @@ manager_dialog = Dialog(
     # user menu
     Window(
         Format(text=_('PICK_BLOGER_ACTION', inst_username='{user.inst_username}')),
-        SwitchTo(Const(text=_('SEND_TASK_BUTTON')), id='send_task', state=ManagerStateGroup.send_task),
+        SwitchTo(Const(text=_('SEND_TASK_BUTTON')), id='send_task', state=ManagerStateGroup.input_price),
         SwitchTo(Const(text=_('STATS_BUTTON')), id='ask_stats', state=ManagerStateGroup.ask_stats),
         # Button(Const(text=_('DELETE')), id='delete_user', on_click=AgencyManagerCallbackHandler.delete_user),
         SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_list', state=ManagerStateGroup.users_list),
         getter=get_user,
         state=ManagerStateGroup.user_menu,
+    ),
+
+    # input_price
+    Window(
+        Const(text='Введите число - стоимость в рублях'),
+        TextInput(
+            id='input_price',
+            type_factory=float,
+            on_success=AgencyManagerCallbackHandler.entered_price,
+        ),
+        SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_user_menu', state=ManagerStateGroup.user_menu),
+        state=ManagerStateGroup.input_price,
     ),
 
     # task input
@@ -95,7 +110,7 @@ manager_dialog = Dialog(
             func=AgencyManagerCallbackHandler.entered_task,
             content_types=[ContentType.TEXT, ContentType.PHOTO, ContentType.VIDEO, ContentType.DOCUMENT]
         ),
-        SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_user_menu', state=ManagerStateGroup.user_menu),
+        SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_input_price', state=ManagerStateGroup.input_price),
         state=ManagerStateGroup.send_task,
     ),
 
@@ -137,5 +152,26 @@ manager_dialog = Dialog(
 
         getter=get_reklams_by_status,
         state=ManagerStateGroup.reklams_list,
+    ),
+
+    # input_period
+    Window(
+        Const(text='Введите период в формате: <code>01.05.2024-11.05.2024</code>'),
+        TextInput(
+            id='input_period_manager',
+            type_factory=str,
+            on_success=AgencyManagerCallbackHandler.input_period
+        ),
+        SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_menu', state=ManagerStateGroup.menu),
+        state=ManagerStateGroup.input_period,
+    ),
+
+    # stats_by_period
+    Window(
+        Format(text='<b>Доход:</b> {full_income} рублей\n'
+                    '<b>Кол-во ТЗ:</b> {advertisements_amount}\n'),
+        SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_input_period', state=ManagerStateGroup.input_period),
+        getter=get_manager_stats_by_period,
+        state=ManagerStateGroup.stats_by_period,
     ),
 )

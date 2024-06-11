@@ -1,3 +1,4 @@
+from datetime import datetime
 from aiogram.types import ContentType
 from aiogram_dialog import DialogManager
 from aiogram_dialog.api.entities import MediaAttachment
@@ -38,10 +39,18 @@ async def get_user(dialog_manager: DialogManager, **kwargs):
     if not user:
         raise ValueError
 
+    reklams_sum = sum(adv.price for adv in await Advertisement.filter(manager_id=user_id))
+
     return {
-        'user': user
+        'user': user,
+        'reklams_sum': reklams_sum,
     }
 
+async def get_manager(dialog_manager: DialogManager, **kwargs):
+    user = await User.get_or_none(user_id=dialog_manager.event.from_user.id)
+    return {
+        'user': user,
+    }
 
 async def get_reklams_by_status(dialog_manager: DialogManager, **kwargs) -> dict[str, list[Advertisement]]:
     current_page = await dialog_manager.find('reklam_scroll').get_page()
@@ -147,4 +156,54 @@ async def get_user_stats(dialog_manager: DialogManager, **kwargs):
 
     return {
         'media_content': media_content
+    }
+
+
+async def get_stats_by_period(dialog_manager: DialogManager, **kwargs):
+    agency = await User.get(user_id=dialog_manager.event.from_user.id)
+
+    start_date = datetime.strptime(dialog_manager.dialog_data['start_date_str'], '%d.%m.%Y')
+    end_date = datetime.strptime(dialog_manager.dialog_data['end_date_str'], '%d.%m.%Y')
+
+    advertisements = await Advertisement.filter(
+        agency_id=agency.id,
+        created_at__gte=start_date,
+        created_at__lte=end_date,
+    ).all()
+
+    full_income, managers_income, clear_income = 0, 0, 0
+    for adv in advertisements:
+        manager: User = await adv.manager
+
+        full_income += adv.price
+        managers_income += round(adv.price * manager.manager_percent / 100)
+
+    return {
+        'full_income': full_income,
+        'managers_income': managers_income,
+        'clear_income': full_income - managers_income,
+        'advertisements_amount': len(advertisements),
+    }
+
+
+async def get_manager_stats_by_period(dialog_manager: DialogManager, **kwargs):
+    manager = await User.get(user_id=dialog_manager.event.from_user.id)
+
+    start_date = datetime.strptime(dialog_manager.dialog_data['start_date_str'], '%d.%m.%Y')
+    end_date = datetime.strptime(dialog_manager.dialog_data['end_date_str'], '%d.%m.%Y')
+
+    advertisements = await Advertisement.filter(
+        agency_id=None,
+        manager_id=manager.id,
+        created_at__gte=start_date,
+        created_at__lte=end_date,
+    ).all()
+
+    full_income = 0
+    for adv in advertisements:
+        full_income += adv.price
+
+    return {
+        'full_income': full_income,
+        'advertisements_amount': len(advertisements),
     }

@@ -1,6 +1,7 @@
 import string
 import random
-from aiogram.types import CallbackQuery, Message
+from datetime import datetime
+from aiogram.types import CallbackQuery, Message, BufferedInputFile
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.input import ManagedTextInput, MessageInput
 from aiogram_dialog.widgets.kbd import Button, Select
@@ -13,6 +14,7 @@ from core.states.bloger import BlogerStateGroup
 from core.database.models import User, Advertisement, StatusType, UserStats
 from core.keyboards.inline import handle_paid_reklam_kb, support_kb
 from core.utils.texts import _
+from core.excel.excel_generator import create_excel_for_agency, create_excel_for_agency_with_managers_data
 from settings import settings
 
 
@@ -161,6 +163,17 @@ class AgencyManagerCallbackHandler:
 
 
     @staticmethod
+    async def entered_price(
+            message: Message,
+            widget: ManagedTextInput,
+            dialog_manager: DialogManager,
+            value: int | float,
+    ):
+        dialog_manager.dialog_data['price'] = value
+        await dialog_manager.switch_to(ManagerStateGroup.send_task)
+
+
+    @staticmethod
     async def entered_task(
             message: Message,
             widget: MessageInput,
@@ -188,6 +201,7 @@ class AgencyManagerCallbackHandler:
 
         adv = await Advertisement.create(
             text=text,
+            price=dialog_manager.dialog_data['price'],
             photo_file_id=photo_file_id,
             video_file_id=video_file_id,
             document_file_id=document_file_id,
@@ -302,6 +316,19 @@ class AgencyManagerCallbackHandler:
 
 
     @staticmethod
+    async def edit_manager_percent(
+            message: Message,
+            widget: ManagedTextInput,
+            dialog_manager: DialogManager,
+            value: int | float,
+    ):
+        await User.filter(id=get_dialog_data(dialog_manager=dialog_manager, key='user_id')).update(
+            manager_percent=value,
+        )
+        await dialog_manager.switch_to(state=AgencyStateGroup.user_menu)
+
+
+    @staticmethod
     async def list_of_reklams_for_buyer(
             callback: CallbackQuery,
             widget: Button | Select,
@@ -326,6 +353,59 @@ class AgencyManagerCallbackHandler:
     ):
         dialog_manager.dialog_data['type'] = 'buyer'
         await dialog_manager.switch_to(ManagerStateGroup.create_bloger_link)
+
+
+    @staticmethod
+    async def input_period(
+            message: Message,
+            widget: ManagedTextInput,
+            dialog_manager: DialogManager,
+            value: str,
+    ):
+        try:
+            start_date_str, end_date_str = value.split('-')
+
+            # check is data correct
+            start_date = datetime.strptime(start_date_str, '%d.%m.%Y')
+            end_date = datetime.strptime(end_date_str, '%d.%m.%Y')
+        except ValueError:
+            return
+
+        dialog_manager.dialog_data['start_date_str'] = start_date_str
+        dialog_manager.dialog_data['end_date_str'] = end_date_str
+
+        if widget.widget.widget_id == 'input_period_agency':
+            await dialog_manager.switch_to(AgencyStateGroup.stats_by_period)
+        elif widget.widget.widget_id == 'input_period_manager':
+            await dialog_manager.switch_to(ManagerStateGroup.stats_by_period)
+
+
+    @staticmethod
+    async def excel_stats(
+            callback: CallbackQuery,
+            widget: Button,
+            dialog_manager: DialogManager,
+    ):
+        agency = await User.get(user_id=callback.from_user.id)
+
+        start_date = datetime.strptime(dialog_manager.dialog_data['start_date_str'], '%d.%m.%Y')
+        end_date = datetime.strptime(dialog_manager.dialog_data['end_date_str'], '%d.%m.%Y')
+
+        advertisements = await Advertisement.filter(
+            agency_id=agency.id,
+            created_at__gte=start_date,
+            created_at__lte=end_date,
+        ).all().order_by('-price')
+
+        # generate excel with stats
+        file_in_memory = await create_excel_for_agency(advertisements=advertisements)
+        await callback.message.answer_document(
+            document=BufferedInputFile(file_in_memory.read(), filename='Agency stats.xlsx'))
+
+        managers = await User.filter(status='manager', agency_id=agency.id)
+        file_in_memory = await create_excel_for_agency_with_managers_data(managers=managers, agency_id=agency.id)
+        await callback.message.answer_document(
+            document=BufferedInputFile(file_in_memory.read(), filename='Managers clients.xlsx'))
 
 
 class BlogerCallbackHandler:
