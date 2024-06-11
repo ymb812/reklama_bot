@@ -209,7 +209,17 @@ class AgencyManagerCallbackHandler:
             manager_id=manager.id,
             bloger_id=bloger_id
         )
+
+        # send info to manager and notification to bloger
         await message.answer(text=_('TZ_IS_SENT'))
+
+        try:
+            bloger = await User.get(id=bloger_id)
+            await dialog_manager.event.bot.send_message(
+                chat_id=bloger.user_id, text='Вам пришла новая реклама на согласование!'
+            )
+        except Exception as e:
+            pass
 
         await dialog_manager.switch_to(ManagerStateGroup.user_menu)
 
