@@ -193,6 +193,8 @@ class AgencyManagerCallbackHandler:
         manager = await User.get(user_id=message.from_user.id)
         if manager.status == StatusType.agency:  # check is manager agency
             agency_id = manager.id
+        elif manager.agency_id:
+            agency_id = manager.agency_id
 
         bloger_id = dialog_manager.dialog_data['user_id']
         text = message.text
