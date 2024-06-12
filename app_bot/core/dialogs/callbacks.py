@@ -127,16 +127,31 @@ class AgencyManagerCallbackHandler:
         if manager.status == StatusType.agency:  # check is manager agency
             agency_id = manager.id
 
-        user = await User.create(
-            username=tg_username,
-            inst_username=inst_username,
-            link=link,
-            status=status,
-            agency_id=agency_id,
-            manager_id=manager.id
-        )
+        # handle new buyer
+        if status == 'buyer':
+            user = (await User.get_or_create(
+                username=tg_username,
+                defaults={
+                    'inst_username': inst_username,
+                    'link': link,
+                    'status': status,
+                    'agency_id': agency_id,
+                    'manager_id': manager.id,
+                }
+            ))[0]
+            await message.answer(text=f'Заказчик {tg_username} успешно добавлен!')
 
-        await message.answer(text=_('USER_IS_ADDED', status=status))
+        else:
+            user = await User.create(
+                username=tg_username,
+                inst_username=inst_username,
+                link=link,
+                status=status,
+                agency_id=agency_id,
+                manager_id=manager.id
+            )
+            await message.answer(text=_('USER_IS_ADDED', status=status))
+
         await message.answer(link)
 
         # handle new buyer
