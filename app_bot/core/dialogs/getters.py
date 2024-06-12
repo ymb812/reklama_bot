@@ -124,7 +124,6 @@ async def get_reklams_by_status(dialog_manager: DialogManager, **kwargs) -> dict
                            f'{data_for_manager["description"]}\n\n' \
                            f'{"Согласовано с блогером" if data_for_manager["is_approved_by_bloger"] else "Не согласовано с блогером"}\n' \
                            f'{"Оплачено" if data_for_manager["is_paid"] else "Не оплачено"}\n\n' \
-                           f'ТГ блогера: {data_for_manager["bloger_tg_username"]}\n' \
                            f'Inst блогера: {data_for_manager["bloger_inst_username"]}\n' \
                            f'ТГ заказчика: {data_for_manager["buyer_tg_username"]}\n'
 
