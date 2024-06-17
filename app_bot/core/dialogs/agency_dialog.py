@@ -4,7 +4,7 @@ from aiogram_dialog.widgets.text import Const, Format
 from aiogram_dialog.widgets.markup.reply_keyboard import ReplyKeyboardFactory
 from aiogram_dialog.widgets.kbd import Button, SwitchTo, RequestContact, Select
 from aiogram_dialog.widgets.input import TextInput, MessageInput
-from core.dialogs.getters import get_input_data, get_users, get_user
+from core.dialogs.getters import get_users, get_user, get_stats_by_period
 from core.dialogs.custom_content import CustomPager
 from core.dialogs.callbacks import AgencyManagerCallbackHandler
 from core.states.agency import AgencyStateGroup
@@ -26,6 +26,7 @@ agency_dialog = Dialog(
                on_click=AgencyManagerCallbackHandler.list_of_users),
         Button(Const(text=_('REKLAMS_LIST_BUTTON')), id='agency_reklams_list',
                on_click=AgencyManagerCallbackHandler.list_of_reklams_for_agency),
+        SwitchTo(Const(text='Статистика за период'), id='agency_income', state=AgencyStateGroup.input_period),
 
         state=AgencyStateGroup.menu,
     ),
@@ -65,15 +66,55 @@ agency_dialog = Dialog(
 
     # user menu
     Window(
-        Format(text=_('PICK_ACTION')),
+        Format(text='<b>Менеджер {user.username}</b>\n\n'
+                    '<b>Текущий процент менеджера:</b> {user.manager_percent}%\n'
+                    '<b>Сумма реклам:</b> {reklams_sum} рублей'),
         Button(
             Const(text=_('REKLAMS_LIST_BUTTON')),
             id='agency_manager_reklams',
             on_click=AgencyManagerCallbackHandler.list_of_reklams_for_agency
         ),
         #Button(Const(text=_('DELETE')), id='delete_user', on_click=AgencyManagerCallbackHandler.add_user),
+        SwitchTo(Const(text='Изменить процент с продаж'), id='edit_manager_percent', state=AgencyStateGroup.edit_manager_percent),
         SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_list', state=AgencyStateGroup.users_list),
         getter=get_user,
         state=AgencyStateGroup.user_menu,
+    ),
+
+    # edit_manager_percent
+    Window(
+        Format(text='Введите число\n\n<i>Текущий процент менеджера: {user.manager_percent}%</i>'),
+        TextInput(
+            id='input_manager_percent',
+            type_factory=float,
+            on_success=AgencyManagerCallbackHandler.edit_manager_percent,
+        ),
+        SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_user_menu', state=AgencyStateGroup.user_menu),
+        getter=get_user,
+        state=AgencyStateGroup.edit_manager_percent,
+    ),
+
+    # input_period
+    Window(
+        Const(text='Введите период в формате: <code>01.01.2024-01.01.2025</code>'),
+        TextInput(
+            id='input_period_agency',
+            type_factory=str,
+            on_success=AgencyManagerCallbackHandler.input_period
+        ),
+        SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_menu', state=AgencyStateGroup.menu),
+        state=AgencyStateGroup.input_period,
+    ),
+
+    # stats_by_period
+    Window(
+        Format(text='<b>Доход:</b> {full_income} рублей\n'
+                    '<b>Чистая прибыль :</b> {clear_income} рублей\n'
+                    '<b>Процент сотрудникам:</b> {managers_income} рублей\n'
+                    '<b>Кол-во ТЗ:</b> {advertisements_amount}\n'),
+        Button(Const(text='Подробная статистика'), id='excel_stats', on_click=AgencyManagerCallbackHandler.excel_stats),
+        SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_input_period', state=AgencyStateGroup.input_period),
+        getter=get_stats_by_period,
+        state=AgencyStateGroup.stats_by_period,
     ),
 )

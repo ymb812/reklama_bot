@@ -6,3 +6,6 @@ class AgencyStateGroup(StatesGroup):
     create_link = State()
     users_list = State()
     user_menu = State()
+    edit_manager_percent = State()
+    input_period = State()
+    stats_by_period = State()
