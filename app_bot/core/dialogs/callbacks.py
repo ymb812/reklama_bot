@@ -471,13 +471,21 @@ class BlogerCallbackHandler:
             widget: Button | Select,
             dialog_manager: DialogManager,
     ):
-        adv = await Advertisement.get_or_none(id=dialog_manager.dialog_data['current_reklam_id'])
+        adv = await Advertisement.get_or_none(id=dialog_manager.dialog_data['current_reklam_id']).prefetch_related('manager')
         if widget.widget_id == 'approve_reklam':
             # change adv status and send msg to manager
             adv.is_approved_by_bloger = True
+            await dialog_manager.event.bot.send_message(
+                chat_id=adv.manager.user_id,
+                text=f'Блогер принял рекламу с ID {adv.id}'
+            )
 
         elif widget.widget_id == 'reject_reklam':
             adv.is_rejected = True
+            await dialog_manager.event.bot.send_message(
+                chat_id=adv.manager.user_id,
+                text=f'Блогер отклонил рекламу с ID {adv.id}'
+            )
 
         await switch_page(dialog_manager=dialog_manager, scroll_id='reklam_scroll')
         await adv.save()
