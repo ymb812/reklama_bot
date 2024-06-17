@@ -301,7 +301,7 @@ class AgencyManagerCallbackHandler:
     ):
         dialog_manager.dialog_data['data_for_manager'] = True
 
-        reklams = await Advertisement.filter(manager__user_id=dialog_manager.event.from_user.id).all()
+        reklams = await Advertisement.filter(manager__user_id=dialog_manager.event.from_user.id, is_done=False).all()
         if not reklams:
             await callback.message.answer(text=_('THERE_IS_NO_REKLAMS'))
             return
@@ -322,7 +322,7 @@ class AgencyManagerCallbackHandler:
         # reklams created by agency
         if widget.widget_id == 'agency_reklams_list':
             # just check to handle ValueError
-            reklams = await Advertisement.filter(agency__user_id=dialog_manager.event.from_user.id).all()
+            reklams = await Advertisement.filter(agency__user_id=dialog_manager.event.from_user.id, is_done=False).all()
             if not reklams:
                 await callback.message.answer(text=_('THERE_IS_NO_REKLAMS'))
                 return
@@ -332,7 +332,7 @@ class AgencyManagerCallbackHandler:
             # save agency's picked manager to check his reklams
             manager_id = get_dialog_data(dialog_manager=dialog_manager, key='user_id')
 
-            reklams = await Advertisement.filter(manager_id=manager_id).all()
+            reklams = await Advertisement.filter(manager_id=manager_id, is_done=False).all()
             if not reklams:
                 await callback.message.answer(text=_('THERE_IS_NO_REKLAMS'))
                 return
@@ -362,7 +362,7 @@ class AgencyManagerCallbackHandler:
             dialog_manager: DialogManager,
             item_id: str | None = None,
     ):
-        reklams = await Advertisement.filter(buyer__user_id=dialog_manager.event.from_user.id).all()
+        reklams = await Advertisement.filter(buyer__user_id=dialog_manager.event.from_user.id, is_done=False).all()
         if not reklams:
             await callback.message.answer(text=_('THERE_IS_NO_REKLAMS'))
             return
@@ -451,11 +451,11 @@ class BlogerCallbackHandler:
         # check is there any reklams
         if dialog_manager.dialog_data.get('is_paid'):
             reklams = await Advertisement.filter(
-                bloger__user_id=dialog_manager.event.from_user.id, is_paid=True,
+                bloger__user_id=dialog_manager.event.from_user.id, is_paid=True, is_done=False,
             ).all()
         else:
             reklams = await Advertisement.filter(
-                bloger__user_id=dialog_manager.event.from_user.id, is_approved_by_bloger=False, is_rejected=False,
+                bloger__user_id=dialog_manager.event.from_user.id, is_approved_by_bloger=False, is_rejected=False, is_done=False,
             ).all()
 
         if not reklams:
