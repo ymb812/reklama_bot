@@ -106,6 +106,7 @@ async def get_reklams_by_status(dialog_manager: DialogManager, **kwargs) -> dict
 
     dialog_manager.dialog_data['pages'] = len(reklams)
     dialog_manager.dialog_data['current_reklam_id'] = current_reklam.id
+    dialog_manager.dialog_data['current_reklam_bloger_user_id'] = (await current_reklam.bloger).user_id
 
 
     # get data for manager

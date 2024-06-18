@@ -6,14 +6,10 @@ from aiogram_dialog.widgets.input import TextInput, MessageInput
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.kbd import PrevPage, NextPage, CurrentPage, Start, Column, StubScroll, Button, Row, \
     FirstPage, LastPage, SwitchTo, Select
-from core.dialogs.custom_content import CustomPager
-from core.dialogs.callbacks import AgencyManagerCallbackHandler
+from core.dialogs.callbacks import AgencyManagerCallbackHandler, BuyerCallbackHandler
 from core.dialogs.getters import get_users, get_user, get_reklams_by_status
-from core.states.manager import ManagerStateGroup
-from core.states.agency import AgencyStateGroup
 from core.states.buyer import BuyerStateGroup
 from core.utils.texts import _
-from settings import settings
 
 
 buyer_dialog = Dialog(
@@ -45,18 +41,25 @@ buyer_dialog = Dialog(
         ),
 
         Column(
-            # # add buyer
-            # Button(
-            #     Const(text=_('ADD_BUYER_BUTTON')),
-            #     id='add_buyer',
-            #     on_click=AgencyManagerCallbackHandler.add_buyer,
-            #     when=F['is_paid'] == False,
-            # ),
-
+            SwitchTo(
+                Const(text='Написать блогеру'),
+                id='chat_with_bloger',
+                state=BuyerStateGroup.send_msg_to_bloger,
+            ),
             SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_menu', state=BuyerStateGroup.menu),
         ),
 
         getter=get_reklams_by_status,
         state=BuyerStateGroup.reklams_list,
+    ),
+
+    # send_msg_to_bloger
+    Window(
+        Format(text=f'Введите сообщение - оно отправится блогеру'),
+        MessageInput(
+            func=BuyerCallbackHandler.entered_message_for_bloger,
+        ),
+        SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_reklams_list', state=BuyerStateGroup.reklams_list),
+        state=BuyerStateGroup.send_msg_to_bloger,
     ),
 )

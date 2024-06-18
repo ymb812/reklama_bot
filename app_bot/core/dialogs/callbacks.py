@@ -12,7 +12,7 @@ from core.states.manager import ManagerStateGroup
 from core.states.buyer import BuyerStateGroup
 from core.states.bloger import BlogerStateGroup
 from core.database.models import User, Advertisement, StatusType, UserStats
-from core.keyboards.inline import handle_paid_reklam_kb, support_kb
+from core.keyboards.inline import handle_paid_reklam_kb, support_kb, buyer_bloger_chat_kb
 from core.utils.texts import _
 from core.excel.excel_generator import create_excel_for_agency, create_excel_for_agency_with_managers_data
 from settings import settings
@@ -597,3 +597,32 @@ class BlogerCallbackHandler:
 
         await message.answer(text=_('Сообщение отправлено, ожидайте ответа...'))
         await dialog_manager.switch_to(BlogerStateGroup.menu)
+
+
+class BuyerCallbackHandler:
+    @staticmethod
+    async def entered_message_for_bloger(
+            message: Message,
+            widget: MessageInput,
+            dialog_manager: DialogManager,
+    ):
+        adv_id = dialog_manager.dialog_data['current_reklam_id']
+        bloger_user_id = dialog_manager.dialog_data['current_reklam_bloger_user_id']
+
+        # send info + msg to the bloger
+        await dialog_manager.event.bot.send_message(
+            chat_id=bloger_user_id,
+            text=f'У вас новое сообщение по рекламе с <b>ID {adv_id}</b>',
+        )
+        await message.copy_to(
+            chat_id=bloger_user_id,
+            reply_markup=buyer_bloger_chat_kb(sender_user_id=message.from_user.id, adv_id=adv_id),
+        )
+
+        # send info for buyer
+        await dialog_manager.event.bot.send_message(
+            chat_id=message.from_user.id,
+            text='Сообщение успешно отправлено!',
+        )
+
+        await dialog_manager.switch_to(BuyerStateGroup.reklams_list)
