@@ -36,3 +36,11 @@ def support_kb(adv_id: str) -> InlineKeyboardMarkup:
     kb.button(text=_('ANSWER_BUTTON'), callback_data=f'answer_{adv_id}')
     kb.adjust(1)
     return kb.as_markup(resize_keyboard=True)
+
+
+# save here user_id of msg sender and adv_id: '..._-4512322311_31'
+def buyer_bloger_chat_kb(sender_user_id: str | int, adv_id: str) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text='Ответить', callback_data=f'send_msg_to_{sender_user_id}_{adv_id}')
+    kb.adjust(1)
+    return kb.as_markup(resize_keyboard=True)
