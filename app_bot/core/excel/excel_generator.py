@@ -43,7 +43,7 @@ async def create_excel_for_agency(advertisements: list[Advertisement]):
     sheet = book.active
 
     # create excel with data
-    sheet.append(['ID', 'Цена', 'Прибыль менеджера', 'Чистая прибыль', 'Дата создания'])
+    sheet.append(['ID', 'ТЗ', 'Цена', 'Прибыль менеджера', 'Чистая прибыль', 'Дата создания'])
 
     full_income, managers_income, clear_income = 0, 0, 0
     for adv in advertisements:
@@ -56,6 +56,7 @@ async def create_excel_for_agency(advertisements: list[Advertisement]):
         sheet.append(
             [
                 adv.id,
+                adv.text,
                 adv.price,
                 manager_income,
                 adv.price - manager_income,
