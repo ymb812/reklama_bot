@@ -121,7 +121,6 @@ async def get_reklams_by_status(dialog_manager: DialogManager, **kwargs) -> dict
             'buyer_tg_username': (await current_reklam.buyer).username if (await current_reklam.buyer) else None,
         }
         data_for_manager = f'<b>ID</b>: {data_for_manager["id"]}\n' \
-                           f'{data_for_manager["description"]}\n\n' \
                            f'{"Согласовано с блогером" if data_for_manager["is_approved_by_bloger"] else "Не согласовано с блогером"}\n' \
                            f'{"Оплачено" if data_for_manager["is_paid"] else "Не оплачено"}\n\n' \
                            f'Inst блогера: {data_for_manager["bloger_inst_username"]}\n' \
