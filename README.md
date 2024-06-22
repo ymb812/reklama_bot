@@ -1,1 +1,0 @@
-# Bot with admin-panel is for buyers and sellers interactionsy

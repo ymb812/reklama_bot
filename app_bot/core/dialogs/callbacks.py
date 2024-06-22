@@ -3,6 +3,7 @@ import random
 from datetime import datetime
 from aiogram.types import CallbackQuery, Message, BufferedInputFile
 from aiogram_dialog import DialogManager
+from aiogram_album import AlbumMessage
 from aiogram_dialog.widgets.input import ManagedTextInput, MessageInput
 from aiogram_dialog.widgets.kbd import Button, Select
 from aiogram_dialog.widgets.common import ManagedScroll
@@ -536,7 +537,7 @@ class BlogerCallbackHandler:
 
     @staticmethod
     async def entered_content(
-            message: Message,
+            message: AlbumMessage,
             widget: MessageInput,
             dialog_manager: DialogManager,
     ):

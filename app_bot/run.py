@@ -8,6 +8,7 @@ from setup import register
 from core.handlers import routers
 from core.dialogs import dialogues
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
+from aiogram_album.lock_middleware import LockAlbumMiddleware
 
 
 bot = Bot(settings.bot_token.get_secret_value(), parse_mode='HTML')
@@ -23,6 +24,7 @@ for _r in routers + dialogues:
 
 setup_dialogs(dp)
 core.middlewares.i18n.setup(dp)
+LockAlbumMiddleware(router=dp)
 dp.message.middleware(BanMiddleware())
 dp.callback_query.middleware(BanMiddleware())
 

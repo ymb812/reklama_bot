@@ -108,9 +108,6 @@ bloger_dialog = Dialog(
         Const(text=_('SEND_CONTENT_TO_BUYER')),
         MessageInput(
             func=BlogerCallbackHandler.entered_content,
-            content_types=[
-                ContentType.TEXT, ContentType.PHOTO, ContentType.VIDEO, ContentType.DOCUMENT, ContentType.VIDEO_NOTE
-            ]
         ),
         SwitchTo(Const(text=_('BACK_BUTTON')), id='go_to_paid_menu', state=BlogerStateGroup.paid_reklam_menu),
         state=BlogerStateGroup.send_content
