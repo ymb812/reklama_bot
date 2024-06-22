@@ -12,7 +12,7 @@ from core.states.manager import ManagerStateGroup
 from core.states.buyer import BuyerStateGroup
 from core.states.bloger import BlogerStateGroup
 from core.database.models import User, Advertisement, StatusType, UserStats
-from core.keyboards.inline import handle_paid_reklam_kb, support_kb
+from core.keyboards.inline import handle_paid_reklam_kb, support_kb, buyer_bloger_chat_kb
 from core.utils.texts import _
 from core.excel.excel_generator import create_excel_for_agency, create_excel_for_agency_with_managers_data
 from settings import settings
@@ -301,7 +301,7 @@ class AgencyManagerCallbackHandler:
     ):
         dialog_manager.dialog_data['data_for_manager'] = True
 
-        reklams = await Advertisement.filter(manager__user_id=dialog_manager.event.from_user.id).all()
+        reklams = await Advertisement.filter(manager__user_id=dialog_manager.event.from_user.id, is_done=False).all()
         if not reklams:
             await callback.message.answer(text=_('THERE_IS_NO_REKLAMS'))
             return
@@ -322,7 +322,7 @@ class AgencyManagerCallbackHandler:
         # reklams created by agency
         if widget.widget_id == 'agency_reklams_list':
             # just check to handle ValueError
-            reklams = await Advertisement.filter(agency__user_id=dialog_manager.event.from_user.id).all()
+            reklams = await Advertisement.filter(agency__user_id=dialog_manager.event.from_user.id, is_done=False).all()
             if not reklams:
                 await callback.message.answer(text=_('THERE_IS_NO_REKLAMS'))
                 return
@@ -332,7 +332,7 @@ class AgencyManagerCallbackHandler:
             # save agency's picked manager to check his reklams
             manager_id = get_dialog_data(dialog_manager=dialog_manager, key='user_id')
 
-            reklams = await Advertisement.filter(manager_id=manager_id).all()
+            reklams = await Advertisement.filter(manager_id=manager_id, is_done=False).all()
             if not reklams:
                 await callback.message.answer(text=_('THERE_IS_NO_REKLAMS'))
                 return
@@ -362,7 +362,7 @@ class AgencyManagerCallbackHandler:
             dialog_manager: DialogManager,
             item_id: str | None = None,
     ):
-        reklams = await Advertisement.filter(buyer__user_id=dialog_manager.event.from_user.id).all()
+        reklams = await Advertisement.filter(buyer__user_id=dialog_manager.event.from_user.id, is_done=False).all()
         if not reklams:
             await callback.message.answer(text=_('THERE_IS_NO_REKLAMS'))
             return
@@ -451,11 +451,11 @@ class BlogerCallbackHandler:
         # check is there any reklams
         if dialog_manager.dialog_data.get('is_paid'):
             reklams = await Advertisement.filter(
-                bloger__user_id=dialog_manager.event.from_user.id, is_paid=True,
+                bloger__user_id=dialog_manager.event.from_user.id, is_paid=True, is_done=False,
             ).all()
         else:
             reklams = await Advertisement.filter(
-                bloger__user_id=dialog_manager.event.from_user.id, is_approved_by_bloger=False, is_rejected=False,
+                bloger__user_id=dialog_manager.event.from_user.id, is_approved_by_bloger=False, is_rejected=False, is_done=False,
             ).all()
 
         if not reklams:
@@ -471,13 +471,21 @@ class BlogerCallbackHandler:
             widget: Button | Select,
             dialog_manager: DialogManager,
     ):
-        adv = await Advertisement.get_or_none(id=dialog_manager.dialog_data['current_reklam_id'])
+        adv = await Advertisement.get_or_none(id=dialog_manager.dialog_data['current_reklam_id']).prefetch_related('manager')
         if widget.widget_id == 'approve_reklam':
             # change adv status and send msg to manager
             adv.is_approved_by_bloger = True
+            await dialog_manager.event.bot.send_message(
+                chat_id=adv.manager.user_id,
+                text=f'Блогер принял рекламу с ID {adv.id}'
+            )
 
         elif widget.widget_id == 'reject_reklam':
             adv.is_rejected = True
+            await dialog_manager.event.bot.send_message(
+                chat_id=adv.manager.user_id,
+                text=f'Блогер отклонил рекламу с ID {adv.id}'
+            )
 
         await switch_page(dialog_manager=dialog_manager, scroll_id='reklam_scroll')
         await adv.save()
@@ -589,3 +597,32 @@ class BlogerCallbackHandler:
 
         await message.answer(text=_('Сообщение отправлено, ожидайте ответа...'))
         await dialog_manager.switch_to(BlogerStateGroup.menu)
+
+
+class BuyerCallbackHandler:
+    @staticmethod
+    async def entered_message_for_bloger(
+            message: Message,
+            widget: MessageInput,
+            dialog_manager: DialogManager,
+    ):
+        adv_id = dialog_manager.dialog_data['current_reklam_id']
+        bloger_user_id = dialog_manager.dialog_data['current_reklam_bloger_user_id']
+
+        # send info + msg to the bloger
+        await dialog_manager.event.bot.send_message(
+            chat_id=bloger_user_id,
+            text=f'У вас новое сообщение по рекламе с <b>ID {adv_id}</b>',
+        )
+        await message.copy_to(
+            chat_id=bloger_user_id,
+            reply_markup=buyer_bloger_chat_kb(sender_user_id=message.from_user.id, adv_id=adv_id),
+        )
+
+        # send info for buyer
+        await dialog_manager.event.bot.send_message(
+            chat_id=message.from_user.id,
+            text='Сообщение успешно отправлено!',
+        )
+
+        await dialog_manager.switch_to(BuyerStateGroup.reklams_list)

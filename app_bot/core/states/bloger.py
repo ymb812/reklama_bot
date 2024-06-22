@@ -9,3 +9,5 @@ class BlogerStateGroup(StatesGroup):
     paid_reklam_menu = State()
     send_content = State()
     ask_support = State()
+
+    handle_answer_from_buyer = State()  # useless

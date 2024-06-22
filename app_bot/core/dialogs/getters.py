@@ -57,7 +57,7 @@ async def get_reklams_by_status(dialog_manager: DialogManager, **kwargs) -> dict
 
     # reklams for buyer
     if get_dialog_data(dialog_manager=dialog_manager, key='data_for_buyer'):
-        reklams = await Advertisement.filter(buyer__user_id=dialog_manager.event.from_user.id).all()
+        reklams = await Advertisement.filter(buyer__user_id=dialog_manager.event.from_user.id, is_done=False).all()
 
     # reklams for manager and agency
     elif get_dialog_data(dialog_manager=dialog_manager, key='data_for_manager'):
@@ -66,26 +66,26 @@ async def get_reklams_by_status(dialog_manager: DialogManager, **kwargs) -> dict
             # get agency reklams by manager
             manager_id = get_dialog_data(dialog_manager=dialog_manager, key='manager_by_agency_id')
             if manager_id:
-                reklams = await Advertisement.filter(manager_id=manager_id).all()
+                reklams = await Advertisement.filter(manager_id=manager_id, is_done=False).all()
 
             # get agency reklams
             else:
-                reklams = await Advertisement.filter(agency__user_id=dialog_manager.event.from_user.id).all()
+                reklams = await Advertisement.filter(agency__user_id=dialog_manager.event.from_user.id, is_done=False).all()
 
         # manager
         else:
-            reklams = await Advertisement.filter(manager__user_id=dialog_manager.event.from_user.id).all()
+            reklams = await Advertisement.filter(manager__user_id=dialog_manager.event.from_user.id, is_done=False).all()
 
     # reklams for bloger
     else:
         if dialog_manager.dialog_data.get('is_paid'):
             reklams = await Advertisement.filter(
-                bloger__user_id=dialog_manager.event.from_user.id, is_paid=True,
+                bloger__user_id=dialog_manager.event.from_user.id, is_paid=True, is_done=False,
             ).all()
 
         else:
             reklams = await Advertisement.filter(
-                bloger__user_id=dialog_manager.event.from_user.id, is_approved_by_bloger=False, is_rejected=False,
+                bloger__user_id=dialog_manager.event.from_user.id, is_approved_by_bloger=False, is_rejected=False, is_done=False,
             ).all()
 
     if not reklams:
@@ -106,6 +106,7 @@ async def get_reklams_by_status(dialog_manager: DialogManager, **kwargs) -> dict
 
     dialog_manager.dialog_data['pages'] = len(reklams)
     dialog_manager.dialog_data['current_reklam_id'] = current_reklam.id
+    dialog_manager.dialog_data['current_reklam_bloger_user_id'] = (await current_reklam.bloger).user_id
 
 
     # get data for manager
@@ -121,7 +122,6 @@ async def get_reklams_by_status(dialog_manager: DialogManager, **kwargs) -> dict
             'buyer_tg_username': (await current_reklam.buyer).username if (await current_reklam.buyer) else None,
         }
         data_for_manager = f'<b>ID</b>: {data_for_manager["id"]}\n' \
-                           f'{data_for_manager["description"]}\n\n' \
                            f'{"Согласовано с блогером" if data_for_manager["is_approved_by_bloger"] else "Не согласовано с блогером"}\n' \
                            f'{"Оплачено" if data_for_manager["is_paid"] else "Не оплачено"}\n\n' \
                            f'Inst блогера: {data_for_manager["bloger_inst_username"]}\n' \
